@@ -1,0 +1,202 @@
+import Database from 'better-sqlite3';
+import { mkdirSync } from 'fs';
+import { dirname } from 'path';
+import 'dotenv/config';
+
+const dbPath = process.env.DB_PATH || './data/quran_bot.db';
+mkdirSync(dirname(dbPath), { recursive: true });
+
+const db = new Database(dbPath);
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+
+// ── users ────────────────────────────────────────────────────
+
+export function getUserByTelegramId(telegramId) {
+  return db.prepare('SELECT * FROM users WHERE telegram_id = ?').get(telegramId);
+}
+
+export function createUser({ telegramId, displayName, language, timezone }) {
+  const stmt = db.prepare(`
+    INSERT INTO users (telegram_id, display_name, language, timezone)
+    VALUES (?, ?, ?, ?)
+  `);
+  const result = stmt.run(telegramId, displayName, language || 'en', timezone || 'UTC');
+  db.prepare('INSERT INTO streaks (student_id) VALUES (?)').run(result.lastInsertRowid);
+  return getUserByTelegramId(telegramId);
+}
+
+export function updateUser(id, fields) {
+  const allowed = ['display_name', 'language', 'timezone', 'reminder_enabled', 'onboarding_done'];
+  const sets = Object.keys(fields)
+    .filter(k => allowed.includes(k))
+    .map(k => `${k} = ?`)
+    .join(', ');
+  const vals = Object.keys(fields)
+    .filter(k => allowed.includes(k))
+    .map(k => fields[k]);
+  if (!sets) return;
+  db.prepare(`UPDATE users SET ${sets} WHERE id = ?`).run(...vals, id);
+}
+
+// ── invite codes ─────────────────────────────────────────────
+
+export function createInviteCode({ ownerId, inviteType }) {
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  db.prepare(`
+    INSERT INTO invite_codes (owner_id, invite_type, code, expires_at)
+    VALUES (?, ?, ?, ?)
+  `).run(ownerId, inviteType, code, expiresAt);
+  return code;
+}
+
+export function getInviteCode(code) {
+  return db.prepare('SELECT * FROM invite_codes WHERE code = ?').get(code);
+}
+
+export function markCodeUsed(code) {
+  db.prepare('UPDATE invite_codes SET used = 1 WHERE code = ?').run(code);
+}
+
+// ── pairs ────────────────────────────────────────────────────
+
+export function getActiveTeacher(studentId) {
+  return db.prepare(`
+    SELECT u.* FROM teacher_pairs tp
+    JOIN users u ON u.id = tp.teacher_id
+    WHERE tp.student_id = ? AND tp.active = 1
+  `).get(studentId);
+}
+
+export function getActiveFriends(studentId) {
+  return db.prepare(`
+    SELECT u.* FROM friend_pairs fp
+    JOIN users u ON u.id = fp.friend_id
+    WHERE fp.student_id = ? AND fp.active = 1
+  `).all(studentId);
+}
+
+export function pairTeacher(studentId, teacherId) {
+  db.prepare(`
+    INSERT INTO teacher_pairs (student_id, teacher_id)
+    VALUES (?, ?)
+    ON CONFLICT (student_id, teacher_id) DO UPDATE SET active = 1
+  `).run(studentId, teacherId);
+}
+
+export function pairFriend(studentId, friendId) {
+  db.prepare(`
+    INSERT INTO friend_pairs (student_id, friend_id)
+    VALUES (?, ?)
+    ON CONFLICT (student_id, friend_id) DO UPDATE SET active = 1
+  `).run(studentId, friendId);
+}
+
+export function unpairTeacher(studentId) {
+  db.prepare(`
+    UPDATE teacher_pairs SET active = 0
+    WHERE student_id = ? AND active = 1
+  `).run(studentId);
+}
+
+// ── memorized ayahs ──────────────────────────────────────────
+
+export function logAyahs({ studentId, surahNumber, ayahFrom, ayahTo, source = 'self_logged' }) {
+  db.prepare(`
+    INSERT INTO memorized_ayahs (student_id, surah_number, ayah_from, ayah_to, source)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(studentId, surahNumber, ayahFrom, ayahTo, source);
+}
+
+export function hasOverlap(studentId, surahNumber, ayahFrom, ayahTo) {
+  const row = db.prepare(`
+    SELECT id FROM memorized_ayahs
+    WHERE student_id = ?
+      AND surah_number = ?
+      AND ayah_from <= ?
+      AND ayah_to >= ?
+    LIMIT 1
+  `).get(studentId, surahNumber, ayahTo, ayahFrom);
+
+  return !!row;
+}
+
+export function getTotalAyahs(studentId) {
+  const row = db.prepare(`
+    SELECT COALESCE(SUM(ayah_to - ayah_from + 1), 0) as total
+    FROM memorized_ayahs WHERE student_id = ?
+  `).get(studentId);
+  return row.total;
+}
+
+export function getProgressBySurah(studentId) {
+  return db.prepare(`
+    SELECT surah_number,
+           SUM(ayah_to - ayah_from + 1) as ayahs_done
+    FROM memorized_ayahs
+    WHERE student_id = ?
+    GROUP BY surah_number
+    ORDER BY surah_number
+  `).all(studentId);
+}
+
+// ── streaks ──────────────────────────────────────────────────
+
+export function getStreak(studentId) {
+  return db.prepare('SELECT * FROM streaks WHERE student_id = ?').get(studentId);
+}
+
+export function updateStreak(studentId) {
+  const streak = getStreak(studentId);
+  const today = new Date().toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+  if (streak.last_log_date === today) return streak;
+
+  let newCurrent = streak.last_log_date === yesterday
+    ? streak.current_streak + 1
+    : 1;
+  let newLongest = Math.max(newCurrent, streak.longest_streak);
+
+  db.prepare(`
+    UPDATE streaks SET current_streak = ?, longest_streak = ?, last_log_date = ?
+    WHERE student_id = ?
+  `).run(newCurrent, newLongest, today, studentId);
+
+  return { ...streak, current_streak: newCurrent, longest_streak: newLongest };
+}
+
+// ── milestones ───────────────────────────────────────────────
+
+export function hasMilestone(studentId, key) {
+  return !!db.prepare(
+    'SELECT id FROM milestones WHERE student_id = ? AND milestone_key = ?'
+  ).get(studentId, key);
+}
+
+export function saveMilestone(studentId, key) {
+  db.prepare(`
+    INSERT OR IGNORE INTO milestones (student_id, milestone_key) VALUES (?, ?)
+  `).run(studentId, key);
+}
+
+// ── inactivity check (for cron) ──────────────────────────────
+
+export function getInactiveStudents(days) {
+  const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  return db.prepare(`
+    SELECT u.*, s.last_log_date FROM users u
+    JOIN streaks s ON s.student_id = u.id
+    WHERE (s.last_log_date IS NULL OR s.last_log_date < ?)
+      AND u.id IN (SELECT student_id FROM teacher_pairs WHERE active = 1)
+  `).all(cutoff);
+}
+
+export function getReminderUsers() {
+  return db.prepare(
+    'SELECT * FROM users WHERE reminder_enabled = 1'
+  ).all();
+}
+
+export default db;

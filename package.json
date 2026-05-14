@@ -1,0 +1,26 @@
+{
+  "name": "hifzbuddy_bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "better-sqlite3": "^12.9.0",
+    "dotenv": "^17.4.2",
+    "node-cron": "^4.2.1",
+    "suncalc": "^1.9.0",
+    "telegraf": "^4.16.3"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "migrate": "node migrations/run.js"
+  }
+}
+
