@@ -39,24 +39,31 @@ export function updateUser(id, fields) {
   db.prepare(`UPDATE users SET ${sets} WHERE id = ?`).run(...vals, id);
 }
 
-// ── invite codes ─────────────────────────────────────────────
+// ── invite slugs (permanent, per user) ───────────────────────
 
-export function createInviteCode({ ownerId, inviteType }) {
-  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-  db.prepare(`
-    INSERT INTO invite_codes (owner_id, invite_type, code, expires_at)
-    VALUES (?, ?, ?, ?)
-  `).run(ownerId, inviteType, code, expiresAt);
-  return code;
+function generateSlug() {
+  return Math.random().toString(36).substring(2, 9);
 }
 
-export function getInviteCode(code) {
-  return db.prepare('SELECT * FROM invite_codes WHERE code = ?').get(code);
+export function getOrCreateSlug(userId, type) {
+  const col = type === 'teacher' ? 'teacher_slug' : 'friend_slug';
+  const user = db.prepare(`SELECT ${col} FROM users WHERE id = ?`).get(userId);
+  if (user[col]) return user[col];
+  const slug = generateSlug();
+  db.prepare(`UPDATE users SET ${col} = ? WHERE id = ?`).run(slug, userId);
+  return slug;
 }
 
-export function markCodeUsed(code) {
-  db.prepare('UPDATE invite_codes SET used = 1 WHERE code = ?').run(code);
+export function resetSlug(userId, type) {
+  const col = type === 'teacher' ? 'teacher_slug' : 'friend_slug';
+  const slug = generateSlug();
+  db.prepare(`UPDATE users SET ${col} = ? WHERE id = ?`).run(slug, userId);
+  return slug;
+}
+
+export function getUserBySlug(slug, type) {
+  const col = type === 'teacher' ? 'teacher_slug' : 'friend_slug';
+  return db.prepare(`SELECT * FROM users WHERE ${col} = ?`).get(slug);
 }
 
 // ── pairs ────────────────────────────────────────────────────

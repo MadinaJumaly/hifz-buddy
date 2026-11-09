@@ -7,8 +7,10 @@ data/*.db-wal
 
 .DS_Store
 .vscode
+.claude
 
 coverage
 dist
 
 *.log
+

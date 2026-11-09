@@ -2,12 +2,27 @@ import { Markup } from 'telegraf';
 import { createUser, getUserByTelegramId } from '../services/db.js';
 import { t } from '../utils/i18n.js';
 
-// Step 1: /start
+// Step 1: /start (also handles deep-link invites: ?start=friend_CODE / ?start=teacher_CODE)
 export async function handleStart(ctx) {
   const existing = getUserByTelegramId(ctx.from.id);
+  const payload = ctx.startPayload || '';
+  const inviteMatch = payload.match(/^(friend|teacher)_([A-Z0-9]+)$/i);
+
   if (existing && existing.onboarding_done) {
     const lang = existing.language;
+    if (inviteMatch) {
+      ctx.user = existing;
+      const { applyInvite } = await import('./pairing.js');
+      await applyInvite(ctx, inviteMatch[1].toLowerCase(), inviteMatch[2]);
+      return;
+    }
     return ctx.reply(`${t(lang, 'progress_header')}\n\n${t(lang, 'log_usage')}`);
+  }
+
+  // New user — store pending invite so it applies after onboarding
+  ctx.session = ctx.session || {};
+  if (inviteMatch) {
+    ctx.session.pendingInvite = payload;
   }
 
   // Language selection first

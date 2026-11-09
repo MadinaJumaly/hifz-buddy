@@ -116,17 +116,27 @@ export async function handleOnboardingDone(ctx) {
   );
 
   await ctx.reply('Open menu:', {
-  reply_markup: {
-    keyboard: [
-      ['📖 Log memorization', '📊 Progress'],
-      ['👥 Add friend', '🎓 Add teacher'],
-      ['🔗 My friend code', '🔗 My teacher code'],
-    ],
-    resize_keyboard: true,
-  },
-});
+    reply_markup: {
+      keyboard: [
+        ['📖 Log memorization', '📊 Progress'],
+        ['🔗 My friend code', '🔗 My teacher code'],
+      ],
+      resize_keyboard: true,
+    },
+  });
 
+  // Apply a pending deep-link invite if the user arrived via one
+  const pendingInvite = ctx.session.pendingInvite;
   ctx.session.step = null;
+  ctx.session.pendingInvite = null;
+
+  if (pendingInvite) {
+    const inviteMatch = pendingInvite.match(/^(friend|teacher)_([A-Z0-9]+)$/i);
+    if (inviteMatch) {
+      const { applyInvite } = await import('./pairing.js');
+      await applyInvite(ctx, inviteMatch[1].toLowerCase(), inviteMatch[2]);
+    }
+  }
 }
 
 // /partial command for onboarding partial surahs

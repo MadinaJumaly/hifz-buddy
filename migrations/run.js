@@ -12,6 +12,13 @@ db.pragma('foreign_keys = ON');
  
 const sql = readFileSync(join(__dirname, 'schema.sql'), 'utf8');
 db.exec(sql);
- 
+
+// Add slug columns to existing databases
+// (SQLite can't ADD COLUMN with UNIQUE, so enforce uniqueness via indexes)
+try { db.exec('ALTER TABLE users ADD COLUMN friend_slug TEXT'); } catch {}
+try { db.exec('ALTER TABLE users ADD COLUMN teacher_slug TEXT'); } catch {}
+db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_friend_slug ON users(friend_slug)');
+db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_teacher_slug ON users(teacher_slug)');
+
 console.log('Migrations applied successfully.');
 db.close();

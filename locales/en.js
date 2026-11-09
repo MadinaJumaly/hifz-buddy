@@ -54,9 +54,12 @@ export default {
   pair_already_teacher: `You already have an active teacher. Use /unpair first.`,
 
   generate_code_teacher:
-    `Share this code with your student. It expires in 24 hours:\n\n🔑 {code}`,
+    `Your teacher link — share this with your students:\n\n{link}\n\nThis link never expires. Use /resetlink teacher to get a new one.`,
   generate_code_friend:
-    `Share this code with your friend. It expires in 24 hours:\n\n🔑 {code}`,
+    `Your friend link — share this with your friends:\n\n{link}\n\nThis link never expires. Use /resetlink friend to get a new one.`,
+
+  resetlink_usage:    `Usage: /resetlink friend  or  /resetlink teacher`,
+  resetlink_done:     `Done! Your new link:\n\n{link}\n\nThe old link no longer works.`,
 
   unpair_confirm:      `Are you sure you want to unpair from your teacher {name}? Your history will be kept.`,
   unpair_done:         `Done. You have been unpaired.`,

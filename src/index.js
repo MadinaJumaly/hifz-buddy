@@ -23,7 +23,7 @@ import { handleProgress } from './handlers/progress.js';
 import {
   handleGenerateTeacher,
   handleGenerateFriend,
-  handlePair,
+  handleResetLink,
   handleUnpair,
   handleUnpairConfirm,
   handleUnpairCancel
@@ -44,7 +44,6 @@ bot.command('menu', async (ctx) => {
   reply_markup: {
     keyboard: [
       ['📖 Log memorization', '📊 Progress'],
-      ['👥 Add friend', '🎓 Add teacher'],
       ['🔗 My friend code', '🔗 My teacher code'],
     ],
     resize_keyboard: true,
@@ -66,7 +65,7 @@ bot.command('progress', handleProgress);
 
 bot.command('genteacher', handleGenerateTeacher);
 bot.command('genfriend', handleGenerateFriend);
-bot.command('pair', handlePair);
+bot.command('resetlink', handleResetLink);
 bot.command('unpair', handleUnpair);
 
 // unpair confirmation
@@ -84,14 +83,6 @@ bot.on('text', async (ctx) => {
   if (text === '🔗 My friend code') return handleGenerateFriend(ctx);
   if (text === '🔗 My teacher code') return handleGenerateTeacher(ctx);
 
-  if (text === '👥 Add friend') {
-    return ctx.reply('Send your friend’s code:\n\nExample:\n/pair ABC123');
-  }
-
-  if (text === '🎓 Add teacher') {
-    return ctx.reply('Send your teacher’s code:\n\n/pair ABC123');
-  }
-
   if (text === '📖 Log memorization') {
     return ctx.reply('Send:\n\n/log 2 255 257\n\nOr full surah:\n/log 112');
   }
@@ -100,7 +91,6 @@ bot.on('text', async (ctx) => {
   reply_markup: {
     keyboard: [
       ['📖 Log memorization', '📊 Progress'],
-      ['👥 Add friend', '🎓 Add teacher'],
       ['🔗 My friend code', '🔗 My teacher code'],
     ],
     resize_keyboard: true,

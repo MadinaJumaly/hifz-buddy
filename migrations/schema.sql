@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS users (
   timezone      TEXT    NOT NULL DEFAULT 'UTC',
   reminder_enabled INTEGER NOT NULL DEFAULT 0,
   onboarding_done  INTEGER NOT NULL DEFAULT 0,
-  registered_at TEXT    NOT NULL DEFAULT (datetime('now'))
+  registered_at TEXT    NOT NULL DEFAULT (datetime('now')),
+  friend_slug   TEXT    UNIQUE,
+  teacher_slug  TEXT    UNIQUE
 );
 
 -- ─────────────────────────────────────────
