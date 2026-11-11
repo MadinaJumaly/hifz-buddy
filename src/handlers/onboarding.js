@@ -1,7 +1,7 @@
 import { Markup } from 'telegraf';
 import surahs from '../data/quran.js';
 import { t } from '../utils/i18n.js';
-import { logAyahs, updateUser, saveMilestone } from '../services/db.js';
+import { logAyahs, updateUser, saveMilestone, hasOverlap } from '../services/db.js';
 
 const PAGE_SIZE = 10; // surahs per page
 
@@ -142,6 +142,8 @@ export async function handleOnboardingDone(ctx) {
 // /partial command for onboarding partial surahs
 export async function handlePartial(ctx) {
   const lang = ctx.user?.language || 'en';
+  if (!ctx.user) return ctx.reply(t(lang, 'error_generic'));
+
   const args = ctx.message.text.split(' ').slice(1).map(Number);
   const [surahNum, from, to] = args;
 
@@ -157,6 +159,10 @@ export async function handlePartial(ctx) {
       surah: getSurahName(check.surah, lang),
       total: check.surah.ayahs,
     }));
+  }
+
+  if (hasOverlap(ctx.user.id, surahNum, from, to)) {
+    return ctx.reply(t(lang, 'log_duplicate'));
   }
 
   logAyahs({

@@ -68,7 +68,7 @@ export async function handleLog(ctx) {
   await notifyContacts(ctx, check.surah, ayahFrom, ayahTo, lang);
 
   // Update streak
-  updateStreak(ctx.user.id);
+  updateStreak(ctx.user.id, ctx.user.timezone);
 
   // Check milestones
   await checkMilestones(ctx, lang);

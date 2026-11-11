@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { Telegraf, session } from 'telegraf';
 
 import { userMiddleware } from './middleware/user.js';
+import { sessionStore } from './services/db.js';
 
 import {
   handleStart,
@@ -32,7 +33,7 @@ import {
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 // middleware
-bot.use(session());
+bot.use(session({ store: sessionStore }));
 bot.use(userMiddleware);
 
 // start
@@ -96,6 +97,15 @@ bot.on('text', async (ctx) => {
     resize_keyboard: true,
   },
 });
+});
+
+// catch handler errors so one bad update can't crash the bot
+bot.catch(async (err, ctx) => {
+  console.error(`Error handling update ${ctx.update?.update_id}:`, err);
+  try {
+    const { t } = await import('./utils/i18n.js');
+    await ctx.reply(t(ctx.user?.language || 'en', 'error_generic'));
+  } catch {}
 });
 
 // launch

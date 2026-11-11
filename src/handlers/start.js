@@ -1,5 +1,5 @@
 import { Markup } from 'telegraf';
-import { createUser, getUserByTelegramId } from '../services/db.js';
+import { createUser, getUserByTelegramId, updateUser } from '../services/db.js';
 import { t } from '../utils/i18n.js';
 
 // Step 1: /start (also handles deep-link invites: ?start=friend_CODE / ?start=teacher_CODE)
@@ -20,7 +20,7 @@ export async function handleStart(ctx) {
   }
 
   // New user — store pending invite so it applies after onboarding
-  ctx.session = ctx.session || {};
+  ctx.session = { ...(ctx.session || {}), step: null, selectedSurahs: [], currentOnboardingPage: 1 };
   if (inviteMatch) {
     ctx.session.pendingInvite = payload;
   }
@@ -71,12 +71,24 @@ export async function handleTimezoneInput(ctx) {
   // Resolve timezone from city name using a simple map
   const tz = resolveTimezone(city) || 'UTC';
 
-  const user = createUser({
-    telegramId: ctx.from.id,
-    displayName: ctx.session.pendingName,
-    language: lang,
-    timezone: tz,
-  });
+  // A user who abandoned onboarding earlier already has a row — update it
+  // instead of inserting a duplicate (telegram_id is UNIQUE).
+  let user = getUserByTelegramId(ctx.from.id);
+  if (user) {
+    updateUser(user.id, {
+      display_name: ctx.session.pendingName,
+      language: lang,
+      timezone: tz,
+    });
+    user = getUserByTelegramId(ctx.from.id);
+  } else {
+    user = createUser({
+      telegramId: ctx.from.id,
+      displayName: ctx.session.pendingName,
+      language: lang,
+      timezone: tz,
+    });
+  }
 
   ctx.user = user;
   ctx.session.step = 'onboarding_surah';

@@ -92,3 +92,12 @@ CREATE TABLE IF NOT EXISTS milestones (
   achieved_at   TEXT    NOT NULL DEFAULT (datetime('now')),
   UNIQUE (student_id, milestone_key)
 );
+
+-- ─────────────────────────────────────────
+-- sessions  (Telegraf session store)
+-- ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS sessions (
+  key        TEXT PRIMARY KEY,
+  data       TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

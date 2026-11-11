@@ -10,6 +10,31 @@ const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
+// ── bot sessions (persisted so restarts don't lose onboarding state) ──
+db.exec(`
+  CREATE TABLE IF NOT EXISTS sessions (
+    key        TEXT PRIMARY KEY,
+    data       TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )
+`);
+
+export const sessionStore = {
+  get(key) {
+    const row = db.prepare('SELECT data FROM sessions WHERE key = ?').get(key);
+    return row ? JSON.parse(row.data) : undefined;
+  },
+  set(key, value) {
+    db.prepare(`
+      INSERT INTO sessions (key, data) VALUES (?, ?)
+      ON CONFLICT (key) DO UPDATE SET data = excluded.data, updated_at = datetime('now')
+    `).run(key, JSON.stringify(value));
+  },
+  delete(key) {
+    db.prepare('DELETE FROM sessions WHERE key = ?').run(key);
+  },
+};
+
 // ── users ────────────────────────────────────────────────────
 
 export function getUserByTelegramId(telegramId) {
@@ -154,10 +179,25 @@ export function getStreak(studentId) {
   return db.prepare('SELECT * FROM streaks WHERE student_id = ?').get(studentId);
 }
 
-export function updateStreak(studentId) {
+// YYYY-MM-DD for "now" in the given IANA timezone (falls back to UTC)
+function localDate(timezone) {
+  try {
+    return new Date().toLocaleDateString('en-CA', { timeZone: timezone || 'UTC' });
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+function previousDate(isoDate) {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+export function updateStreak(studentId, timezone = 'UTC') {
   const streak = getStreak(studentId);
-  const today = new Date().toISOString().slice(0, 10);
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const today = localDate(timezone);
+  const yesterday = previousDate(today);
 
   if (streak.last_log_date === today) return streak;
 
