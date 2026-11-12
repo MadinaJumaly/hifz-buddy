@@ -1,6 +1,7 @@
 import { Markup } from 'telegraf';
 import surahs from '../data/quran.js';
 import { t } from '../utils/i18n.js';
+import { mainMenu } from '../utils/menu.js';
 import { logAyahs, updateUser, saveMilestone, hasOverlap } from '../services/db.js';
 
 const PAGE_SIZE = 10; // surahs per page
@@ -112,18 +113,11 @@ export async function handleOnboardingDone(ctx) {
 
   await ctx.editMessageText(
     t(lang, 'onboarding_done', { count: totalAyahs }) +
-    '\n\n' + t(lang, 'ask_partial')
+    '\n\n' + t(lang, 'ask_partial') +
+    '\n\n' + t(lang, 'reminder_hint')
   );
 
-  await ctx.reply('Open menu:', {
-    reply_markup: {
-      keyboard: [
-        ['📖 Log memorization', '📊 Progress'],
-        ['🔗 My friend code', '🔗 My teacher code'],
-      ],
-      resize_keyboard: true,
-    },
-  });
+  await ctx.reply('Open menu:', mainMenu);
 
   // Apply a pending deep-link invite if the user arrived via one
   const pendingInvite = ctx.session.pendingInvite;

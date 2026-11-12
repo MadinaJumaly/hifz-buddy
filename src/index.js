@@ -3,6 +3,9 @@ import { Telegraf, session } from 'telegraf';
 
 import { userMiddleware } from './middleware/user.js';
 import { sessionStore } from './services/db.js';
+import { startReminderScheduler } from './services/reminders.js';
+import { handleReminder } from './handlers/reminder.js';
+import { BTN, mainMenu } from './utils/menu.js';
 
 import {
   handleStart,
@@ -40,17 +43,7 @@ bot.use(userMiddleware);
 bot.start(handleStart);
 
 // menu buttons
-bot.command('menu', async (ctx) => {
-  await ctx.reply('Menu:', {
-  reply_markup: {
-    keyboard: [
-      ['📖 Log memorization', '📊 Progress'],
-      ['🔗 My friend code', '🔗 My teacher code'],
-    ],
-    resize_keyboard: true,
-  },
-});
-});
+bot.command('menu', (ctx) => ctx.reply('Menu:', mainMenu));
 
 // onboarding flow
 bot.action(/^lang_/, handleLanguageChoice);
@@ -63,6 +56,7 @@ bot.action('ob_noop', (ctx) => ctx.answerCbQuery());
 bot.command('log', handleLog);
 bot.command('partial', handlePartial);
 bot.command('progress', handleProgress);
+bot.command('reminder', handleReminder);
 
 bot.command('genteacher', handleGenerateTeacher);
 bot.command('genfriend', handleGenerateFriend);
@@ -80,23 +74,19 @@ bot.on('text', async (ctx) => {
   if (ctx.session?.step === 'awaiting_name') return handleNameInput(ctx);
   if (ctx.session?.step === 'awaiting_timezone') return handleTimezoneInput(ctx);
 
-  if (text === '📊 Progress') return handleProgress(ctx);
-  if (text === '🔗 My friend code') return handleGenerateFriend(ctx);
-  if (text === '🔗 My teacher code') return handleGenerateTeacher(ctx);
+  if (text === BTN.progress) return handleProgress(ctx);
+  if (text === BTN.friendCode) return handleGenerateFriend(ctx);
+  if (text === BTN.teacherCode) return handleGenerateTeacher(ctx);
+  if (text === BTN.reminder) {
+    ctx.message.text = '/reminder';
+    return handleReminder(ctx);
+  }
 
-  if (text === '📖 Log memorization') {
+  if (text === BTN.log) {
     return ctx.reply('Send:\n\n/log 2 255 257\n\nOr full surah:\n/log 112');
   }
 
-  return ctx.reply('Menu:', {
-  reply_markup: {
-    keyboard: [
-      ['📖 Log memorization', '📊 Progress'],
-      ['🔗 My friend code', '🔗 My teacher code'],
-    ],
-    resize_keyboard: true,
-  },
-});
+  return ctx.reply('Menu:', mainMenu);
 });
 
 // catch handler errors so one bad update can't crash the bot
@@ -109,10 +99,15 @@ bot.catch(async (err, ctx) => {
 });
 
 // launch
-bot.launch()
-  .then(() => console.log('Bot started'))
+const stopReminders = startReminderScheduler(bot.telegram);
+
+bot.launch(() => console.log('Bot started'))
   .catch((err) => console.error('Bot failed:', err.message));
 
 // graceful stop
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.once(signal, () => {
+    stopReminders();
+    bot.stop(signal);
+  });
+}

@@ -20,5 +20,10 @@ try { db.exec('ALTER TABLE users ADD COLUMN teacher_slug TEXT'); } catch {}
 db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_friend_slug ON users(friend_slug)');
 db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_teacher_slug ON users(teacher_slug)');
 
+// Reminder columns for existing databases
+try { db.exec("ALTER TABLE users ADD COLUMN reminder_time TEXT NOT NULL DEFAULT '20:00'"); } catch {}
+try { db.exec('ALTER TABLE users ADD COLUMN last_reminded_date TEXT'); } catch {}
+try { db.exec('ALTER TABLE users ADD COLUMN teacher_alerted_for TEXT'); } catch {}
+
 console.log('Migrations applied successfully.');
 db.close();

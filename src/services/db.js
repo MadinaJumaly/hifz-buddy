@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import { mkdirSync } from 'fs';
 import { dirname } from 'path';
 import 'dotenv/config';
+import { localDate, previousDate } from '../utils/time.js';
 
 const dbPath = process.env.DB_PATH || './data/quran_bot.db';
 mkdirSync(dirname(dbPath), { recursive: true });
@@ -52,7 +53,10 @@ export function createUser({ telegramId, displayName, language, timezone }) {
 }
 
 export function updateUser(id, fields) {
-  const allowed = ['display_name', 'language', 'timezone', 'reminder_enabled', 'onboarding_done'];
+  const allowed = [
+    'display_name', 'language', 'timezone', 'reminder_enabled', 'onboarding_done',
+    'reminder_time', 'last_reminded_date', 'teacher_alerted_for',
+  ];
   const sets = Object.keys(fields)
     .filter(k => allowed.includes(k))
     .map(k => `${k} = ?`)
@@ -179,21 +183,6 @@ export function getStreak(studentId) {
   return db.prepare('SELECT * FROM streaks WHERE student_id = ?').get(studentId);
 }
 
-// YYYY-MM-DD for "now" in the given IANA timezone (falls back to UTC)
-function localDate(timezone) {
-  try {
-    return new Date().toLocaleDateString('en-CA', { timeZone: timezone || 'UTC' });
-  } catch {
-    return new Date().toISOString().slice(0, 10);
-  }
-}
-
-function previousDate(isoDate) {
-  const d = new Date(`${isoDate}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() - 1);
-  return d.toISOString().slice(0, 10);
-}
-
 export function updateStreak(studentId, timezone = 'UTC') {
   const streak = getStreak(studentId);
   const today = localDate(timezone);
@@ -228,22 +217,31 @@ export function saveMilestone(studentId, key) {
   `).run(studentId, key);
 }
 
-// ── inactivity check (for cron) ──────────────────────────────
-
-export function getInactiveStudents(days) {
-  const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
-  return db.prepare(`
-    SELECT u.*, s.last_log_date FROM users u
-    JOIN streaks s ON s.student_id = u.id
-    WHERE (s.last_log_date IS NULL OR s.last_log_date < ?)
-      AND u.id IN (SELECT student_id FROM teacher_pairs WHERE active = 1)
-  `).all(cutoff);
-}
+// ── reminders & inactivity alerts (used by services/reminders.js) ──
 
 export function getReminderUsers() {
   return db.prepare(
-    'SELECT * FROM users WHERE reminder_enabled = 1'
+    'SELECT * FROM users WHERE reminder_enabled = 1 AND onboarding_done = 1'
   ).all();
+}
+
+// Active teacher pairs with the student's last activity date
+// (last log, or the pairing date if they never logged)
+export function getTeacherPairsForInactivityCheck() {
+  return db.prepare(`
+    SELECT stu.id                AS student_id,
+           stu.display_name      AS student_name,
+           stu.teacher_alerted_for,
+           COALESCE(s.last_log_date, date(tp.paired_at)) AS last_active,
+           tch.telegram_id       AS teacher_telegram_id,
+           tch.language          AS teacher_language,
+           tch.timezone          AS teacher_timezone
+    FROM teacher_pairs tp
+    JOIN users stu ON stu.id = tp.student_id
+    JOIN users tch ON tch.id = tp.teacher_id
+    LEFT JOIN streaks s ON s.student_id = stu.id
+    WHERE tp.active = 1
+  `).all();
 }
 
 export default db;

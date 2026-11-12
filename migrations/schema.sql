@@ -11,7 +11,10 @@ CREATE TABLE IF NOT EXISTS users (
   onboarding_done  INTEGER NOT NULL DEFAULT 0,
   registered_at TEXT    NOT NULL DEFAULT (datetime('now')),
   friend_slug   TEXT    UNIQUE,
-  teacher_slug  TEXT    UNIQUE
+  teacher_slug  TEXT    UNIQUE,
+  reminder_time       TEXT NOT NULL DEFAULT '20:00',  -- HH:MM in user's timezone
+  last_reminded_date  TEXT,                           -- local date of last reminder
+  teacher_alerted_for TEXT                            -- last-active date teacher was alerted about
 );
 
 -- ─────────────────────────────────────────

@@ -86,4 +86,15 @@ export default {
   confirm_no:          `No`,
   done:                `Done`,
   back:                `Back`,
+
+  // ── reminders ───────────────────────────────────────────────
+  reminder_status_on:  `⏰ Daily reminder is ON at {time} ({tz}).\n\nChange the time: /reminder 21:30\nTurn off: /reminder off`,
+  reminder_status_off: `⏰ Daily reminder is OFF.\n\nTurn on: /reminder on (at {time})\nOr pick a time: /reminder 21:30`,
+  reminder_on:         `✅ Daily reminder set for {time} ({tz}). I'll only remind you on days you haven't logged yet.`,
+  reminder_off:        `Daily reminder turned off.`,
+  reminder_invalid:    `Please use a 24-hour time, for example: /reminder 20:00`,
+  reminder_message:    `🌙 Assalamu Alaykum, {name}! You haven't logged any memorization today.\n\nEven a few ayahs count — use /log when you're ready.`,
+  reminder_streak:     `Your streak is {n} days — keep it going! 🔥`,
+  reminder_hint:       `Tip: turn on a daily reminder with /reminder on`,
+  teacher_inactive_alert: `📭 {student} hasn't logged any new memorization in {days} days.`,
 };
