@@ -23,6 +23,7 @@ import {
 
 import { handleLog, handleLogPrompt, logFromText, LOG_TEXT_RE } from './handlers/log.js';
 import { handleProgress } from './handlers/progress.js';
+import { handleInlineQuery } from './handlers/share.js';
 import { handleReminder } from './handlers/reminder.js';
 import { handleSettings, handleSettingsAction, handleSettingsCityInput } from './handlers/settings.js';
 
@@ -61,6 +62,9 @@ bot.command('genteacher', handleGenerateTeacher);
 bot.command('genfriend', handleGenerateFriend);
 bot.command('resetlink', handleResetLink);
 bot.command('unpair', handleUnpair);
+
+// inline mode: share the progress card into any chat or channel
+bot.on('inline_query', handleInlineQuery);
 
 // inline buttons
 bot.action('log_more', handleLogPrompt);

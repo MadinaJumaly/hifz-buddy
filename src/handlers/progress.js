@@ -7,6 +7,8 @@ import { getSurah } from '../data/quran.js';
 import { t } from '../utils/i18n.js';
 import { bar, escapeHtml, shareButton } from '../utils/progress.js';
 import { localDate, previousDate } from '../utils/time.js';
+import { updateUser } from '../services/db.js';
+import { renderCard } from '../services/card.js';
 
 // Number of fully memorized surahs
 export function surahStats(studentId) {
@@ -40,6 +42,40 @@ export function liveStreak(user) {
   return { current: alive ? streak.current_streak : 0, best: streak.longest_streak };
 }
 
+// Render the user's card and send it as a photo with `caption` (HTML) and a Share button.
+// Falls back to a plain text message if rendering or uploading fails.
+export async function sendCard(ctx, { caption, headline } = {}) {
+  const user = ctx.user;
+  const lang = user.language;
+  const ayahs = getTotalAyahs(user.id);
+  const { surahs } = surahStats(user.id);
+  const juz = juzStats(user.id);
+  const keyboard = Markup.inlineKeyboard([shareButton(ctx, lang, { surahs, ayahs })]);
+
+  try {
+    const png = renderCard({
+      lang,
+      name: user.display_name,
+      ayahs,
+      surahs,
+      juzDone: juz.completed.length,
+      streak: liveStreak(user).current,
+      juz: juz.progress,
+      botUsername: ctx.botInfo.username,
+      timezone: user.timezone,
+      headline,
+    });
+    const msg = await ctx.replyWithPhoto({ source: png, filename: 'hifz.png' }, {
+      caption, parse_mode: 'HTML', ...keyboard,
+    });
+    const fileId = msg?.photo?.[msg.photo.length - 1]?.file_id;
+    if (fileId) updateUser(user.id, { card_file_id: fileId });
+  } catch (err) {
+    console.error('Card failed, sending text instead:', err.message);
+    await ctx.reply(caption, { parse_mode: 'HTML', ...keyboard });
+  }
+}
+
 export async function handleProgress(ctx) {
   const user = ctx.user;
   const lang = user?.language || 'en';
@@ -53,9 +89,8 @@ export async function handleProgress(ctx) {
   const streak = liveStreak(user);
   const week = getAyahsLoggedSince(user.id, 7);
 
+  // Caption under the card image
   const lines = [
-    `<b>${escapeHtml(user.display_name)}</b>`,
-    '',
     t(lang, surahs > 0 ? 'progress_main' : 'progress_main_ayahs', { surahs, ayahs }),
     t(lang, 'progress_by_heart'),
     '',
@@ -78,8 +113,5 @@ export async function handleProgress(ctx) {
     lines.push(t(lang, 'progress_streak_start'));
   }
 
-  await ctx.reply(lines.join('\n'), {
-    parse_mode: 'HTML',
-    ...Markup.inlineKeyboard([shareButton(ctx, lang, { surahs, ayahs })]),
-  });
+  await sendCard(ctx, { caption: lines.join('\n') });
 }

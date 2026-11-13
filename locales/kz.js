@@ -108,4 +108,15 @@ export default {
   juz_left: `{n}-пара — {left} аят қалды`,
   progress_juz_done: `{n} пара ✓`,
   milestone_juz: `🎉 <b>{n}-пара аяқталды</b>\n\nМашаАллаһ, {name}! Аллаһ оны жүрегіңізде берік етсін.`,
+
+  // ── share card (image) ───────────────────────────────────────
+  card_kicker: `Хифз жолы`,
+  card_ayahs_label: `жатқа жатталған аяттар`,
+  card_surahs: `Сүрелер`,
+  card_juz: `Пара`,
+  card_streak: `Күн қатарынан`,
+  card_head_juz: `{n}-пара аяқталды`,
+  card_head_goal: `{goal} аят`,
+  card_head_khatm: `Құран толық`,
+  inline_no_card: `Карточка жасау үшін ботты ашыңыз`,
 };

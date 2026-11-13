@@ -50,7 +50,7 @@ export function createUser({ telegramId, displayName, language, timezone }) {
 export function updateUser(id, fields) {
   const allowed = [
     'display_name', 'language', 'timezone', 'reminder_enabled', 'onboarding_done',
-    'reminder_time', 'last_reminded_date', 'teacher_alerted_for', 'city',
+    'reminder_time', 'last_reminded_date', 'teacher_alerted_for', 'city', 'card_file_id',
   ];
   const sets = Object.keys(fields)
     .filter(k => allowed.includes(k))

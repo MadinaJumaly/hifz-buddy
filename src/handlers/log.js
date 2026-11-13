@@ -6,9 +6,9 @@ import {
 } from '../services/db.js';
 import { validateAyahRange, getSurahName, getSurah } from '../data/quran.js';
 import { t } from '../utils/i18n.js';
-import { GOALS, TOTAL_AYAHS, escapeHtml, shareButton } from '../utils/progress.js';
+import { GOALS, TOTAL_AYAHS, escapeHtml } from '../utils/progress.js';
 import { juzOf } from '../data/juz.js';
-import { surahStats, juzStats, juzLines } from './progress.js';
+import { juzStats, juzLines, sendCard } from './progress.js';
 
 // Plain-text log: "2 255 257" (surah, from, to) or "112" (whole surah)
 export const LOG_TEXT_RE = /^\s*\d{1,3}(\s+\d{1,3}\s+\d{1,3})?\s*$/;
@@ -131,19 +131,19 @@ async function celebrateGoals(ctx, lang, total, completedJuz, touchedJuz) {
   fresh.forEach(g => saveMilestone(userId, `ayahs_${g}`));
   if (freshJuz.length === 0 && fresh.length === 0) return;
 
-  const { surahs } = surahStats(userId);
-  const share = Markup.inlineKeyboard([shareButton(ctx, lang, { surahs, ayahs: total })]);
-
   if (total >= TOTAL_AYAHS && !hasMilestone(userId, 'khatm')) {
     saveMilestone(userId, 'khatm');
-    return ctx.reply(t(lang, 'milestone_khatm', { name: ctx.user.display_name }), share);
+    return sendCard(ctx, {
+      headline: t(lang, 'card_head_khatm'),
+      caption: escapeHtml(t(lang, 'milestone_khatm', { name: ctx.user.display_name })),
+    });
   }
 
   if (freshJuz.length) {
     const n = freshJuz[freshJuz.length - 1];
-    return ctx.reply(t(lang, 'milestone_juz', { n, name }), { parse_mode: 'HTML', ...share });
+    return sendCard(ctx, { headline: t(lang, 'card_head_juz', { n }), caption: t(lang, 'milestone_juz', { n, name }) });
   }
 
   const goal = fresh[fresh.length - 1];
-  await ctx.reply(t(lang, 'milestone_goal', { goal, name }), { parse_mode: 'HTML', ...share });
+  await sendCard(ctx, { headline: t(lang, 'card_head_goal', { goal }), caption: t(lang, 'milestone_goal', { goal, name }) });
 }

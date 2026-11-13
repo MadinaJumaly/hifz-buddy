@@ -25,6 +25,9 @@ export function migrate(db) {
   // city name shown in settings
   addColumn('ALTER TABLE users ADD COLUMN city TEXT');
 
+  // Telegram file_id of the user's latest progress card (reused for inline sharing)
+  addColumn('ALTER TABLE users ADD COLUMN card_file_id TEXT');
+
   // One-time data migrations, tracked with SQLite's user_version
   const version = db.pragma('user_version', { simple: true });
   if (version < 1) {

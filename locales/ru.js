@@ -108,4 +108,15 @@ export default {
   juz_left: `Джуз {n} — осталось аятов: {left}`,
   progress_juz_done: `Завершено джузов: {n} ✓`,
   milestone_juz: `🎉 <b>Джуз {n} завершён</b>\n\nМашаАллах, {name}! Да укрепит Аллах его в вашем сердце.`,
+
+  // ── share card (image) ───────────────────────────────────────
+  card_kicker: `Путь хифза`,
+  card_ayahs_label: `аяты, выученные наизусть`,
+  card_surahs: `Суры`,
+  card_juz: `Джузы`,
+  card_streak: `Дней подряд`,
+  card_head_juz: `Джуз {n} завершён`,
+  card_head_goal: `{goal} аятов`,
+  card_head_khatm: `Весь Коран`,
+  inline_no_card: `Откройте бота, чтобы создать карточку`,
 };

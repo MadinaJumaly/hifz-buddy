@@ -108,4 +108,15 @@ export default {
   juz_left: `Juz {n} — {left} ayahs to go`,
   progress_juz_done: `{n} juz ✓`,
   milestone_juz: `🎉 <b>Juz {n} complete</b>\n\nMashaAllah, {name}! May Allah keep it firm in your heart.`,
+
+  // ── share card (image) ───────────────────────────────────────
+  card_kicker: `Hifz journey`,
+  card_ayahs_label: `ayahs memorized by heart`,
+  card_surahs: `Surahs`,
+  card_juz: `Juz complete`,
+  card_streak: `Day streak`,
+  card_head_juz: `Juz {n} complete`,
+  card_head_goal: `{goal} ayahs`,
+  card_head_khatm: `The whole Quran`,
+  inline_no_card: `Open the bot to create your card`,
 };

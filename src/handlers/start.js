@@ -31,10 +31,15 @@ export async function handleStart(ctx) {
 
   if (existing && existing.onboarding_done) {
     const lang = existing.language;
+    ctx.user = existing;
     if (inviteMatch) {
-      ctx.user = existing;
       const { applyInvite } = await import('./pairing.js');
       return applyInvite(ctx, inviteMatch[1].toLowerCase(), inviteMatch[2]);
+    }
+    // Came from "Create your card" in the inline share list
+    if (payload === 'card') {
+      const { handleProgress } = await import('./progress.js');
+      return handleProgress(ctx);
     }
     return ctx.reply(t(lang, 'welcome_back', { name: existing.display_name }), mainMenu(lang));
   }

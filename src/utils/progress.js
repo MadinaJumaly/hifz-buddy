@@ -17,8 +17,12 @@ export function escapeHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-// Inline "Share" button that opens Telegram's chat/channel picker
+// "Share" button. With inline mode enabled (BotFather → /setinline) it opens the chat/channel
+// picker and posts the user's card image; otherwise it shares a text message with a link.
 export function shareButton(ctx, lang, { surahs, ayahs }) {
+  if (ctx.botInfo?.supports_inline_queries) {
+    return Markup.button.switchToChat(t(lang, 'share_btn'), 'card');
+  }
   const botLink = `https://t.me/${ctx.botInfo.username}`;
   const text = t(lang, 'share_text', { surahs, ayahs });
   const url = `https://t.me/share/url?url=${encodeURIComponent(botLink)}&text=${encodeURIComponent(text)}`;
