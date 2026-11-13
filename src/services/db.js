@@ -3,6 +3,7 @@ import { mkdirSync } from 'fs';
 import { dirname } from 'path';
 import 'dotenv/config';
 import { localDate, previousDate } from '../utils/time.js';
+import { migrate } from './migrate.js';
 
 const dbPath = process.env.DB_PATH || './data/quran_bot.db';
 mkdirSync(dirname(dbPath), { recursive: true });
@@ -10,15 +11,9 @@ mkdirSync(dirname(dbPath), { recursive: true });
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
+migrate(db);
 
 // ── bot sessions (persisted so restarts don't lose onboarding state) ──
-db.exec(`
-  CREATE TABLE IF NOT EXISTS sessions (
-    key        TEXT PRIMARY KEY,
-    data       TEXT NOT NULL,
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )
-`);
 
 export const sessionStore = {
   get(key) {
@@ -55,7 +50,7 @@ export function createUser({ telegramId, displayName, language, timezone }) {
 export function updateUser(id, fields) {
   const allowed = [
     'display_name', 'language', 'timezone', 'reminder_enabled', 'onboarding_done',
-    'reminder_time', 'last_reminded_date', 'teacher_alerted_for',
+    'reminder_time', 'last_reminded_date', 'teacher_alerted_for', 'city',
   ];
   const sets = Object.keys(fields)
     .filter(k => allowed.includes(k))
@@ -164,6 +159,16 @@ export function getTotalAyahs(studentId) {
     FROM memorized_ayahs WHERE student_id = ?
   `).get(studentId);
   return row.total;
+}
+
+// Ayahs logged (not from onboarding) in the last `days` days
+export function getAyahsLoggedSince(studentId, days) {
+  return db.prepare(`
+    SELECT COALESCE(SUM(ayah_to - ayah_from + 1), 0) AS n
+    FROM memorized_ayahs
+    WHERE student_id = ? AND source = 'self_logged'
+      AND logged_at >= datetime('now', ?)
+  `).get(studentId, `-${days} days`).n;
 }
 
 export function getProgressBySurah(studentId) {

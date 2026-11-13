@@ -2,6 +2,15 @@ import { updateUser } from '../services/db.js';
 import { localParts, parseTime } from '../utils/time.js';
 import { t } from '../utils/i18n.js';
 
+// Turn the reminder on at `time` (HH:MM). If that time already passed today,
+// the first reminder comes tomorrow instead of right away.
+export function setReminder(user, time) {
+  const fields = { reminder_enabled: 1, reminder_time: time };
+  const now = localParts(user.timezone);
+  if (now.time >= time) fields.last_reminded_date = now.date;
+  updateUser(user.id, fields);
+}
+
 // /reminder            → show status
 // /reminder on | off   → enable / disable
 // /reminder 20:30      → set time and enable
@@ -27,12 +36,6 @@ export async function handleReminder(ctx) {
   const time = arg === 'on' ? user.reminder_time : parseTime(arg);
   if (!time) return ctx.reply(t(lang, 'reminder_invalid'));
 
-  const fields = { reminder_enabled: 1, reminder_time: time };
-
-  // If that time has already passed today, start tomorrow instead of firing right away
-  const now = localParts(user.timezone);
-  if (now.time >= time) fields.last_reminded_date = now.date;
-
-  updateUser(user.id, fields);
+  setReminder(user, time);
   return ctx.reply(t(lang, 'reminder_on', { time, tz: user.timezone }));
 }

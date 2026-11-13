@@ -1,134 +1,106 @@
 import { Markup } from 'telegraf';
 import { createUser, getUserByTelegramId, updateUser } from '../services/db.js';
+import { CITY_BUTTONS, getCityButton, resolveTimezone } from '../data/cities.js';
+import { LANGUAGE_NAMES, mainMenu } from '../utils/menu.js';
 import { t } from '../utils/i18n.js';
 
-// Step 1: /start (also handles deep-link invites: ?start=friend_CODE / ?start=teacher_CODE)
+// Setup flow: language → city → already-memorized surahs → done.
+// The display name comes from the Telegram profile, so there's nothing to type.
+
+const INVITE_RE = /^(friend|teacher)_([A-Z0-9]+)$/i;
+
+export function languageKeyboard(prefix) {
+  return Markup.inlineKeyboard(
+    Object.entries(LANGUAGE_NAMES).map(([code, name]) => [Markup.button.callback(name, `${prefix}${code}`)])
+  );
+}
+
+export function cityKeyboard(lang, prefix, extraRows = []) {
+  const buttons = CITY_BUTTONS.map(c => Markup.button.callback(c[lang] || c.en, `${prefix}${c.key}`));
+  buttons.push(Markup.button.callback(t(lang, 'city_other'), `${prefix}other`));
+  const rows = [];
+  for (let i = 0; i < buttons.length; i += 2) rows.push(buttons.slice(i, i + 2));
+  return Markup.inlineKeyboard([...rows, ...extraRows]);
+}
+
+// /start (also handles deep-link invites: ?start=friend_CODE / ?start=teacher_CODE)
 export async function handleStart(ctx) {
   const existing = getUserByTelegramId(ctx.from.id);
   const payload = ctx.startPayload || '';
-  const inviteMatch = payload.match(/^(friend|teacher)_([A-Z0-9]+)$/i);
+  const inviteMatch = payload.match(INVITE_RE);
 
   if (existing && existing.onboarding_done) {
     const lang = existing.language;
     if (inviteMatch) {
       ctx.user = existing;
       const { applyInvite } = await import('./pairing.js');
-      await applyInvite(ctx, inviteMatch[1].toLowerCase(), inviteMatch[2]);
-      return;
+      return applyInvite(ctx, inviteMatch[1].toLowerCase(), inviteMatch[2]);
     }
-    return ctx.reply(`${t(lang, 'progress_header')}\n\n${t(lang, 'log_usage')}`);
+    return ctx.reply(t(lang, 'welcome_back', { name: existing.display_name }), mainMenu(lang));
   }
 
-  // New user — store pending invite so it applies after onboarding
-  ctx.session = { ...(ctx.session || {}), step: null, selectedSurahs: [], currentOnboardingPage: 1 };
-  if (inviteMatch) {
-    ctx.session.pendingInvite = payload;
-  }
+  // New (or unfinished) user — start fresh, keep a pending invite for after setup
+  ctx.session = { step: null, selectedSurahs: [], currentOnboardingPage: 1 };
+  if (inviteMatch) ctx.session.pendingInvite = payload;
 
-  // Language selection first
   await ctx.reply(
-    '🌙 Welcome / Добро пожаловать / Қош келдіңіз\n\nChoose your language:',
-    Markup.inlineKeyboard([
-      [
-        Markup.button.callback('English', 'lang_en'),
-        Markup.button.callback('Русский', 'lang_ru'),
-        Markup.button.callback('Қазақша', 'lang_kz'),
-      ],
-    ])
+    '🇰🇿 Тілді таңдаңыз\n🇷🇺 Выберите язык\n🇬🇧 Choose your language',
+    languageKeyboard('lang_'),
   );
 }
 
-// Step 2: Language chosen → ask name
+// Language chosen → short intro + city buttons
 export async function handleLanguageChoice(ctx) {
-  const lang = ctx.callbackQuery.data.split('_')[1];
   await ctx.answerCbQuery();
+  const lang = ctx.callbackQuery.data.split('_')[1];
 
-  // Store pending lang in session via chat data
   ctx.session = ctx.session || {};
   ctx.session.pendingLang = lang;
-  ctx.session.step = 'awaiting_name';
+  ctx.session.step = null;
 
-  await ctx.editMessageText(t(lang, 'welcome'));
+  const name = ctx.from.first_name || '';
+  await ctx.editMessageText(t(lang, 'welcome', { name }), cityKeyboard(lang, 'city_'));
 }
 
-// Step 3: Name received → ask timezone
-export async function handleNameInput(ctx) {
+// City button tapped during setup
+export async function handleCityChoice(ctx) {
+  await ctx.answerCbQuery();
   const lang = ctx.session?.pendingLang || 'en';
-  const name = ctx.message.text.trim();
-  if (!name || name.length > 60) return ctx.reply('Please enter a valid name.');
+  const key = ctx.callbackQuery.data.slice('city_'.length);
 
-  ctx.session.pendingName = name;
-  ctx.session.step = 'awaiting_timezone';
-
-  await ctx.reply(t(lang, 'ask_timezone', { name }));
-}
-
-// Step 4: Timezone received → create user → start onboarding
-export async function handleTimezoneInput(ctx) {
-  const lang = ctx.session?.pendingLang || 'en';
-  const city = ctx.message.text.trim();
-
-  // Resolve timezone from city name using a simple map
-  const tz = resolveTimezone(city) || 'UTC';
-
-  // A user who abandoned onboarding earlier already has a row — update it
-  // instead of inserting a duplicate (telegram_id is UNIQUE).
-  let user = getUserByTelegramId(ctx.from.id);
-  if (user) {
-    updateUser(user.id, {
-      display_name: ctx.session.pendingName,
-      language: lang,
-      timezone: tz,
-    });
-    user = getUserByTelegramId(ctx.from.id);
-  } else {
-    user = createUser({
-      telegramId: ctx.from.id,
-      displayName: ctx.session.pendingName,
-      language: lang,
-      timezone: tz,
-    });
+  if (key === 'other') {
+    ctx.session.step = 'awaiting_city';
+    return ctx.editMessageText(t(lang, 'city_type_prompt'));
   }
 
-  ctx.user = user;
-  ctx.session.step = 'onboarding_surah';
-
-  await ctx.reply(t(lang, 'ask_baseline'));
-
-  // Trigger surah selector
-  const { sendSurahSelector } = await import('./onboarding.js');
-  await sendSurahSelector(ctx, 1);
+  const city = getCityButton(key);
+  if (!city) return;
+  await finishProfile(ctx, lang, city[lang] || city.en, city.tz);
 }
 
-// Simple city → IANA timezone map for common Muslim-majority cities
-function resolveTimezone(city) {
-  const map = {
-    almaty: 'Asia/Almaty',
-    astana: 'Asia/Almaty',
-    nur: 'Asia/Almaty',
-    shymkent: 'Asia/Almaty',
-    tashkent: 'Asia/Tashkent',
-    moscow: 'Europe/Moscow',
-    москва: 'Europe/Moscow',
-    dubai: 'Asia/Dubai',
-    riyadh: 'Asia/Riyadh',
-    cairo: 'Africa/Cairo',
-    istanbul: 'Europe/Istanbul',
-    london: 'Europe/London',
-    paris: 'Europe/Paris',
-    berlin: 'Europe/Berlin',
-    jakarta: 'Asia/Jakarta',
-    karachi: 'Asia/Karachi',
-    lahore: 'Asia/Karachi',
-    dhaka: 'Asia/Dhaka',
-    kuala: 'Asia/Kuala_Lumpur',
-    ankara: 'Europe/Istanbul',
-    tehran: 'Asia/Tehran',
-    baghdad: 'Asia/Baghdad',
-    beirut: 'Asia/Beirut',
-    amman: 'Asia/Amman',
-    doha: 'Asia/Qatar',
-    kuwait: 'Asia/Kuwait',
-  };
-  return map[city.toLowerCase().split(/\s/)[0]] || null;
+// City typed during setup ("Other")
+export async function handleCityInput(ctx) {
+  const lang = ctx.session?.pendingLang || 'en';
+  const cityName = ctx.message.text.trim().slice(0, 60);
+  const tz = resolveTimezone(cityName);
+  if (!tz) await ctx.reply(t(lang, 'city_unknown'));
+  await finishProfile(ctx, lang, cityName, tz || 'UTC');
+}
+
+// Create (or update, if setup was abandoned earlier) the user, then ask for surahs
+async function finishProfile(ctx, lang, city, tz) {
+  const displayName = (ctx.from.first_name || ctx.from.username || 'Friend').slice(0, 60);
+
+  let user = getUserByTelegramId(ctx.from.id);
+  if (user) {
+    updateUser(user.id, { display_name: displayName, language: lang, timezone: tz, city });
+  } else {
+    user = createUser({ telegramId: ctx.from.id, displayName, language: lang, timezone: tz });
+    updateUser(user.id, { city });
+  }
+  ctx.user = getUserByTelegramId(ctx.from.id);
+  ctx.session.step = 'onboarding_surah';
+
+  const { sendSurahSelector } = await import('./onboarding.js');
+  await sendSurahSelector(ctx, 1);
 }

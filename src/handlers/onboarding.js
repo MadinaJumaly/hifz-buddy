@@ -2,6 +2,7 @@ import { Markup } from 'telegraf';
 import surahs from '../data/quran.js';
 import { t } from '../utils/i18n.js';
 import { mainMenu } from '../utils/menu.js';
+import { GOALS, TOTAL_AYAHS } from '../utils/progress.js';
 import { logAyahs, updateUser, saveMilestone, hasOverlap } from '../services/db.js';
 
 const PAGE_SIZE = 10; // surahs per page
@@ -30,7 +31,7 @@ export async function sendSurahSelector(ctx, page = 1) {
     Markup.button.callback(t(lang, 'done'), 'ob_done'),
   ]);
 
-  const text = `${t(lang, 'ask_baseline')}\n\n_Selected: ${selected.length} surahs_`;
+  const text = `${t(lang, 'ask_baseline')}\n\n_${t(lang, 'selected_count', { n: selected.length })}_`;
 
   if (ctx.callbackQuery) {
     await ctx.editMessageText(text, {
@@ -99,25 +100,18 @@ export async function handleOnboardingDone(ctx) {
     return acc + (s ? s.ayahs : 0);
   }, 0);
 
-  const thresholds = [50, 100, 200, 300, 500, 1000];
-
-    for (const threshold of thresholds) {
-    if (totalAyahs >= threshold) {
-        saveMilestone(ctx.user.id, `ayahs_${threshold}`);
-    }
-    }
-
-    if (totalAyahs >= 6236) {
-    saveMilestone(ctx.user.id, 'khatm');
-    }
+  // Goals already reached before using the bot are recorded silently
+  for (const goal of GOALS) {
+    if (totalAyahs >= goal) saveMilestone(ctx.user.id, `ayahs_${goal}`);
+  }
+  if (totalAyahs >= TOTAL_AYAHS) saveMilestone(ctx.user.id, 'khatm');
 
   await ctx.editMessageText(
     t(lang, 'onboarding_done', { count: totalAyahs }) +
-    '\n\n' + t(lang, 'ask_partial') +
     '\n\n' + t(lang, 'reminder_hint')
   );
 
-  await ctx.reply('Open menu:', mainMenu);
+  await ctx.reply(t(lang, 'menu_ready'), mainMenu(lang));
 
   // Apply a pending deep-link invite if the user arrived via one
   const pendingInvite = ctx.session.pendingInvite;

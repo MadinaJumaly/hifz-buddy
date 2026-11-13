@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS users (
   teacher_slug  TEXT    UNIQUE,
   reminder_time       TEXT NOT NULL DEFAULT '20:00',  -- HH:MM in user's timezone
   last_reminded_date  TEXT,                           -- local date of last reminder
-  teacher_alerted_for TEXT                            -- last-active date teacher was alerted about
+  teacher_alerted_for TEXT,                           -- last-active date teacher was alerted about
+  city                TEXT                            -- city name shown in settings
 );
 
 -- ─────────────────────────────────────────

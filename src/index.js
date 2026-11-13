@@ -4,25 +4,27 @@ import { Telegraf, session } from 'telegraf';
 import { userMiddleware } from './middleware/user.js';
 import { sessionStore } from './services/db.js';
 import { startReminderScheduler } from './services/reminders.js';
-import { handleReminder } from './handlers/reminder.js';
-import { BTN, mainMenu } from './utils/menu.js';
+import { mainMenu, matchMenuButton } from './utils/menu.js';
+import { t } from './utils/i18n.js';
 
 import {
   handleStart,
   handleLanguageChoice,
-  handleNameInput,
-  handleTimezoneInput
+  handleCityChoice,
+  handleCityInput,
 } from './handlers/start.js';
 
 import {
   handleSurahToggle,
   handlePageNav,
   handleOnboardingDone,
-  handlePartial
+  handlePartial,
 } from './handlers/onboarding.js';
 
-import { handleLog } from './handlers/log.js';
+import { handleLog, handleLogPrompt, logFromText, LOG_TEXT_RE } from './handlers/log.js';
 import { handleProgress } from './handlers/progress.js';
+import { handleReminder } from './handlers/reminder.js';
+import { handleSettings, handleSettingsAction, handleSettingsCityInput } from './handlers/settings.js';
 
 import {
   handleGenerateTeacher,
@@ -30,7 +32,7 @@ import {
   handleResetLink,
   handleUnpair,
   handleUnpairConfirm,
-  handleUnpairCancel
+  handleUnpairCancel,
 } from './handlers/pairing.js';
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -39,70 +41,88 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 bot.use(session({ store: sessionStore }));
 bot.use(userMiddleware);
 
-// start
+// setup
 bot.start(handleStart);
-
-// menu buttons
-bot.command('menu', (ctx) => ctx.reply('Menu:', mainMenu));
-
-// onboarding flow
 bot.action(/^lang_/, handleLanguageChoice);
+bot.action(/^city_/, handleCityChoice);
 bot.action(/^ob_surah_/, handleSurahToggle);
 bot.action(/^ob_page_/, handlePageNav);
 bot.action('ob_done', handleOnboardingDone);
 bot.action('ob_noop', (ctx) => ctx.answerCbQuery());
 
 // commands
+bot.command('menu', (ctx) => ctx.reply(t(ctx.user?.language, 'menu_ready'), mainMenu(ctx.user?.language)));
 bot.command('log', handleLog);
 bot.command('partial', handlePartial);
 bot.command('progress', handleProgress);
+bot.command('settings', handleSettings);
 bot.command('reminder', handleReminder);
-
 bot.command('genteacher', handleGenerateTeacher);
 bot.command('genfriend', handleGenerateFriend);
 bot.command('resetlink', handleResetLink);
 bot.command('unpair', handleUnpair);
 
-// unpair confirmation
+// inline buttons
+bot.action('log_more', handleLogPrompt);
+bot.action(/^set_/, handleSettingsAction);
 bot.action('unpair_yes', handleUnpairConfirm);
 bot.action('unpair_no', handleUnpairCancel);
 
-// text steps (name, timezone)
+// plain text: typed answers, menu buttons, or a log like "2 255 257"
 bot.on('text', async (ctx) => {
   const text = ctx.message.text;
+  const step = ctx.session?.step;
 
-  if (ctx.session?.step === 'awaiting_name') return handleNameInput(ctx);
-  if (ctx.session?.step === 'awaiting_timezone') return handleTimezoneInput(ctx);
+  const button = matchMenuButton(text);
+  if (button && ctx.session?.step === 'settings_city') ctx.session.step = null;
 
-  if (text === BTN.progress) return handleProgress(ctx);
-  if (text === BTN.friendCode) return handleGenerateFriend(ctx);
-  if (text === BTN.teacherCode) return handleGenerateTeacher(ctx);
-  if (text === BTN.reminder) {
-    ctx.message.text = '/reminder';
-    return handleReminder(ctx);
+  switch (button) {
+    case 'log': return handleLogPrompt(ctx);
+    case 'progress': return handleProgress(ctx);
+    case 'settings': return handleSettings(ctx);
+    case 'friend': return handleGenerateFriend(ctx);
+    case 'teacher': return handleGenerateTeacher(ctx);
   }
 
-  if (text === BTN.log) {
-    return ctx.reply('Send:\n\n/log 2 255 257\n\nOr full surah:\n/log 112');
+  if (step === 'awaiting_city') return handleCityInput(ctx);
+  if (step === 'settings_city' && ctx.user) return handleSettingsCityInput(ctx);
+
+  if (!ctx.user || !ctx.user.onboarding_done) {
+    return ctx.reply(t(ctx.user?.language || 'en', 'setup_first'));
   }
 
-  return ctx.reply('Menu:', mainMenu);
+  if (LOG_TEXT_RE.test(text)) return logFromText(ctx, text);
+
+  // Anything else: show the menu with a hint
+  return ctx.reply(t(ctx.user.language, 'menu_hint'), mainMenu(ctx.user.language));
 });
 
 // catch handler errors so one bad update can't crash the bot
 bot.catch(async (err, ctx) => {
   console.error(`Error handling update ${ctx.update?.update_id}:`, err);
   try {
-    const { t } = await import('./utils/i18n.js');
     await ctx.reply(t(ctx.user?.language || 'en', 'error_generic'));
   } catch {}
 });
 
+// Commands shown in Telegram's "Menu" button, per language
+async function setCommands() {
+  const make = (lang) => ['progress', 'settings', 'start'].map(command => ({
+    command,
+    description: t(lang, `cmd_${command}`),
+  }));
+  await bot.telegram.setMyCommands(make('en'));
+  await bot.telegram.setMyCommands(make('ru'), { language_code: 'ru' });
+  await bot.telegram.setMyCommands(make('kz'), { language_code: 'kk' });
+}
+
 // launch
 const stopReminders = startReminderScheduler(bot.telegram);
 
-bot.launch(() => console.log('Bot started'))
-  .catch((err) => console.error('Bot failed:', err.message));
+bot.launch(() => {
+  console.log('Bot started');
+  setCommands().catch((err) => console.error('setMyCommands failed:', err.message));
+}).catch((err) => console.error('Bot failed:', err.message));
 
 // graceful stop
 for (const signal of ['SIGINT', 'SIGTERM']) {

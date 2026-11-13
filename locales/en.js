@@ -1,30 +1,11 @@
 export default {
-  // ── onboarding ──────────────────────────────────────────────
-  welcome:
-    `Assalamu Alaykum! 🌙\n\nWelcome to the Quran Memorization Bot.\n\nThis bot will help you track your Hifz journey and notify your teacher or friends every time you memorize new ayahs.\n\nLet's get you set up. What is your name?`,
-
-  ask_timezone:
-    `JazakAllahu Khayran, {name}!\n\nPlease enter your city name so I can set your timezone correctly.\n\nExample: Almaty, London, Dubai`,
 
   ask_baseline:
-    `BarakAllahu feek! Now let's record what you have already memorized.\n\nSelect the surahs you have fully memorized. You can also enter partial surahs after.\n\nUse the buttons below — tap a surah to mark it, then press Done when finished.`,
-
-  ask_partial:
-    `Would you like to add any partially memorized surahs?\n\nSend me: /partial [surah number] [from] [to]\nExample: /partial 2 1 10`,
-
-  onboarding_done:
-    `MashAllah! Your baseline has been saved.\n\nYou have recorded {count} ayahs memorized so far.\n\nYou are ready to begin. Use /log to record new memorization. May Allah make it easy for you. 🤲`,
-
-  // ── logging ─────────────────────────────────────────────────
-  log_usage:
-    `Usage: /log [surah] [from] [to]\nExample: /log 2 255 257\n\nFor a full surah: /log 112`,
+    `📚 Which surahs do you already know by heart?\n\nTap to mark them, then press Done. Nothing yet? Just press Done.`,
 
   log_invalid_surah:   `That surah number is not valid. Please enter a number between 1 and 114.`,
   log_invalid_range:   `That ayah range is not valid for this surah. {surah} has {total} ayahs.`,
   log_duplicate:       `You have already logged these ayahs. Use /progress to see what you have memorized.`,
-
-  log_success:
-    `Alhamdulillah! Logged:\n{ar} — {name}\nAyahs {from}–{to}\n\nKeep going! 💪`,
 
   log_notified:        `Your teacher and friends have been notified.`,
 
@@ -35,17 +16,8 @@ export default {
   notify_friend:
     `📖 {student} logged new memorization:\n{ar} — {name} ({n}), ayahs {from}–{to}`,
 
-  // ── progress ────────────────────────────────────────────────
-  progress_header:     `📊 Your Hifz Progress`,
-  progress_total:      `Total ayahs memorized: {count} / 6236`,
-  progress_streak:     `Current streak: {current} days  |  Best: {longest} days`,
-  //progress_juz:        `Juz' {n}: {done} / {total} ayahs`,
-  progress_empty:      `You have not logged any memorization yet. Use /log to get started.`,
-
   // ── pairing ─────────────────────────────────────────────────
-  pair_usage:          `Usage: /pair [code]`,
   pair_not_found:      `That code was not found or has expired. Ask for a new one.`,
-  pair_used:           `That code has already been used.`,
   pair_self:           `You cannot pair with yourself.`,
   pair_teacher_done:
     `You are now connected to your teacher {name}. They will be notified of your progress. BarakAllahu feek!`,
@@ -65,16 +37,7 @@ export default {
   unpair_done:         `Done. You have been unpaired.`,
   unpair_none:         `You do not have an active teacher.`,
 
-  // ── reminders ───────────────────────────────────────────────
-  reminder_on:         `Fajr reminder enabled. I will remind you every day at Fajr time in {tz}.`,
-  reminder_off:        `Reminder disabled.`,
-  reminder_message:    `Assalamu Alaykum {name}. A new day, a new opportunity to memorize. 🌅\n\nUse /log to record today's memorization.`,
-  inactivity_alert:    `📋 {student} has not logged memorization in {days} days.`,
-
   // ── milestones ───────────────────────────────────────────────
-  milestone_50:        `MashAllah {name}! You have memorized 50 ayahs! May Allah keep it in your heart. 🌟`,
-  milestone_100:       `SubhanAllah {name}! 100 ayahs memorized! You are on the path of the people of the Quran. ✨`,
-  milestone_juz:       `Alhamdulillah {name}! You have completed Juz' {n}! 🎉`,
   milestone_khatm:     `La ilaha illallah {name}! You have completed the entire Quran! May Allah accept it from you and make you among Ahlul Quran. 🤲🌙`,
 
   // ── general ─────────────────────────────────────────────────
@@ -84,17 +47,62 @@ export default {
   cancel:              `Cancelled.`,
   confirm_yes:         `Yes`,
   confirm_no:          `No`,
-  done:                `Done`,
+  done:                `✅ Done`,
   back:                `Back`,
 
-  // ── reminders ───────────────────────────────────────────────
-  reminder_status_on:  `⏰ Daily reminder is ON at {time} ({tz}).\n\nChange the time: /reminder 21:30\nTurn off: /reminder off`,
-  reminder_status_off: `⏰ Daily reminder is OFF.\n\nTurn on: /reminder on (at {time})\nOr pick a time: /reminder 21:30`,
-  reminder_on:         `✅ Daily reminder set for {time} ({tz}). I'll only remind you on days you haven't logged yet.`,
-  reminder_off:        `Daily reminder turned off.`,
-  reminder_invalid:    `Please use a 24-hour time, for example: /reminder 20:00`,
-  reminder_message:    `🌙 Assalamu Alaykum, {name}! You haven't logged any memorization today.\n\nEven a few ayahs count — use /log when you're ready.`,
-  reminder_streak:     `Your streak is {n} days — keep it going! 🔥`,
-  reminder_hint:       `Tip: turn on a daily reminder with /reminder on`,
+  // ── setup, menu, logging & settings ──────────────────────────
+  welcome: `Assalamu Alaykum, {name}! 🌙\n\nHifzBuddy helps you keep track of your Quran memorization:\n• log new ayahs in a few seconds\n• see your progress and streak\n• keep your teacher and friends updated\n\n📍 Which city are you in? It's used for reminder times.`,
+  welcome_back: `Assalamu Alaykum, {name}! 🌙 Your menu is below.`,
+  city_other: `Other`,
+  city_type_prompt: `Type the name of your city:`,
+  city_unknown: `I don't know that city yet, so I'll use UTC time. You can change it later in ⚙️ Settings.`,
+  city_not_found: `I don't know that city yet. Please pick one of the buttons, or try a bigger city nearby.`,
+  setup_first: `Let's finish setting up first — send /start`,
+  selected_count: `Selected: {n}`,
+  onboarding_done: `MashaAllah! Saved {count} ayahs you already know. 🤲\n\nTo log new memorization, tap 📖 or just send:\n• 2 255 257 — surah 2, ayahs 255–257\n• 112 — the whole surah\n\nKnow part of a surah already? Send it the same way.`,
+  menu_ready: `Here's your menu 👇`,
+  menu_hint: `To log memorization, just send the surah and ayahs, e.g. 2 255 257\nOr use the menu below 👇`,
+  log_prompt: `Send the surah number and ayahs:\n\n• 2 255 257 — surah 2, ayahs 255–257\n• 112 — the whole surah`,
+  log_usage: `Send: /partial [surah] [from] [to]\nExample: /partial 2 1 10`,
+  log_success: `✅ Saved: {ar} — {name}, ayahs {from}–{to}`,
+  log_more: `➕ Log more`,
+  progress_empty: `Nothing logged yet. Tap 📖 or send e.g. 112 to log a whole surah.`,
+  settings_title: `⚙️ Settings\n\nTap a row to change it.`,
+  settings_city: `📍 City: {city}`,
+  settings_lang: `🌐 Language: {lang}`,
+  settings_reminder_on: `🔔 Reminder: {time}`,
+  settings_reminder_off: `🔕 Reminder: off`,
+  settings_invite_friend: `👥 Invite a friend`,
+  settings_teacher_link: `🎓 Link for students`,
+  settings_choose_city: `📍 Choose your city:`,
+  settings_choose_reminder: `🔔 When should I remind you?\n\nI'll only send it on days you haven't logged anything yet.`,
+  reminder_off_btn: `🔕 Turn off`,
+  reminder_status_on: `⏰ Daily reminder is ON at {time} ({tz}).\n\nChange it in ⚙️ Settings, or: /reminder 21:30 · /reminder off`,
+  reminder_status_off: `⏰ Daily reminder is OFF.\n\nTurn it on in ⚙️ Settings, or: /reminder on`,
+  reminder_on: `✅ Daily reminder set for {time} ({tz}). I'll only remind you on days you haven't logged yet.`,
+  reminder_off: `Daily reminder turned off.`,
+  reminder_invalid: `Please use a 24-hour time, for example: /reminder 20:00`,
+  reminder_message: `🌙 Assalamu Alaykum, {name}! You haven't logged any memorization today.\n\nEven a few ayahs count — tap 📖 when you're ready.`,
+  reminder_streak: `Your streak is {n} days — keep it going! 🔥`,
+  reminder_hint: `🔔 Want a daily reminder? Turn it on in ⚙️ Settings.`,
   teacher_inactive_alert: `📭 {student} hasn't logged any new memorization in {days} days.`,
+  cmd_progress: `My progress`,
+  cmd_settings: `Settings`,
+  cmd_start: `Main menu`,
+
+  // ── progress, goals & sharing ─────────────────────────────────
+  progress_main: `Surahs <b>{surahs}</b>   ·   Ayahs <b>{ayahs}</b>`,
+  progress_by_heart: `<i>memorized by heart</i>`,
+  progress_next: `Next goal <b>{goal}</b> — {left} to go`,
+  progress_complete: `<b>The whole Quran</b> ✓`,
+  progress_juz_amma: `Juz Amma ✓`,
+  progress_week: `+{n} this week`,
+  progress_streak_on: `🔥 {n}-day streak`,
+  progress_streak_best: ` · best {n}`,
+  progress_streak_start: `Log today to start your streak 🔥`,
+  log_goal: `{left} to go until {goal}`,
+  log_streak: `🔥 {n}-day streak`,
+  milestone_goal: `🎉 <b>{goal} ayahs</b>\n\nMashaAllah, {name}! Another milestone on your hifz journey.`,
+  share_btn: `↗ Share`,
+  share_text: `Alhamdulillah! My hifz so far: {surahs} surahs, {ayahs} ayahs 🤍\nTracking it with HifzBuddy`,
 };
