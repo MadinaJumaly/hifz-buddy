@@ -161,6 +161,14 @@ export function getTotalAyahs(studentId) {
   return row.total;
 }
 
+// All memorized ranges, oldest first (last row = most recent log)
+export function getMemorizedRanges(studentId) {
+  return db.prepare(`
+    SELECT surah_number, ayah_from, ayah_to FROM memorized_ayahs
+    WHERE student_id = ? ORDER BY id
+  `).all(studentId);
+}
+
 // Ayahs logged (not from onboarding) in the last `days` days
 export function getAyahsLoggedSince(studentId, days) {
   return db.prepare(`

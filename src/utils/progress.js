@@ -6,18 +6,10 @@ export const TOTAL_AYAHS = 6236;
 // Small, reachable goals first; the last one is the whole Quran
 export const GOALS = [10, 25, 50, 100, 200, 300, 500, 750, 1000, 1500, 2000, 2500, 3000, 4000, 5000, TOTAL_AYAHS];
 
-export function nextGoal(total) {
-  return GOALS.find(g => g > total) ?? null;
-}
-
-// Highest goal reached at `total`, or null
-export function reachedGoal(total) {
-  return [...GOALS].reverse().find(g => g <= total) ?? null;
-}
-
-// "▰▰▰▰▰▰▰▱▱▱" — progress toward the next goal, not the whole Quran
-export function goalBar(total, goal, width = 10) {
-  const filled = Math.min(width, Math.floor((total / goal) * width));
+// "▰▰▰▰▰▰▰▱▱▱" — any progress at all shows at least one filled segment
+export function bar(done, total, width = 10) {
+  let filled = Math.min(width, Math.floor((done / total) * width));
+  if (done > 0 && filled === 0) filled = 1;
   return '▰'.repeat(filled) + '▱'.repeat(width - filled);
 }
 

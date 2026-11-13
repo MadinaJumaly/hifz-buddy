@@ -92,19 +92,20 @@ export default {
 
   // ── progress, goals & sharing ─────────────────────────────────
   progress_main: `Сүрелер <b>{surahs}</b>   ·   Аяттар <b>{ayahs}</b>`,
+  progress_main_ayahs: `Аяттар <b>{ayahs}</b>`,
   progress_by_heart: `<i>жатқа жатталды</i>`,
-  progress_next: `Келесі мақсат <b>{goal}</b> — {left} қалды`,
   progress_complete: `<b>Құран толық</b> ✓`,
-  progress_juz_amma: `Әмма парасы ✓`,
   progress_week: `Осы аптада +{n}`,
   progress_streak_on: `🔥 Қатарынан {n} күн`,
   progress_streak_best: ` · рекорд {n}`,
   progress_streak_start: `Бүгін жазыңыз — серияны бастаңыз 🔥`,
-  log_goal: `{goal} дейін {left} қалды`,
   log_streak: `🔥 Қатарынан {n} күн`,
   milestone_goal: `🎉 <b>{goal} аят</b>\n\nМашаАллаһ, {name}! Хифз жолындағы тағы бір белес.`,
   share_btn: `↗ Бөлісу`,
   share_text: `Әлхамдулиллаһ! Менің хифзым: {surahs} сүре, {ayahs} аят 🤍\nHifzBuddy арқылы қадағалаймын`,
   pair_friend_owner: `🤝 {name} сіздің сілтемеңіз арқылы қосылды. Енді доссыздар және бір-біріңіздің жаңа жаттағандарыңызды көресіздер.`,
   pair_teacher_owner: `📖 {name} сізге шәкірт ретінде қосылды. Оның үлгерімі туралы хабарлама аласыз.`,
+  juz_left: `{n}-пара — {left} аят қалды`,
+  progress_juz_done: `{n} пара ✓`,
+  milestone_juz: `🎉 <b>{n}-пара аяқталды</b>\n\nМашаАллаһ, {name}! Аллаһ оны жүрегіңізде берік етсін.`,
 };

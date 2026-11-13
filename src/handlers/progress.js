@@ -1,20 +1,35 @@
 import { Markup } from 'telegraf';
-import { getTotalAyahs, getProgressBySurah, getStreak, getAyahsLoggedSince } from '../services/db.js';
+import {
+  getTotalAyahs, getProgressBySurah, getStreak, getAyahsLoggedSince, getMemorizedRanges,
+} from '../services/db.js';
+import { juzProgress, currentJuz } from '../data/juz.js';
 import { getSurah } from '../data/quran.js';
 import { t } from '../utils/i18n.js';
-import { nextGoal, goalBar, escapeHtml, shareButton } from '../utils/progress.js';
+import { bar, escapeHtml, shareButton } from '../utils/progress.js';
 import { localDate, previousDate } from '../utils/time.js';
 
-// Full surahs memorized, and whether all of Juz Amma (surahs 78–114) is done
+// Number of fully memorized surahs
 export function surahStats(studentId) {
-  const done = new Set(
-    getProgressBySurah(studentId)
-      .filter(row => row.ayahs_done >= (getSurah(row.surah_number)?.ayahs ?? Infinity))
-      .map(row => row.surah_number),
-  );
-  let juzAmma = true;
-  for (let n = 78; n <= 114; n++) if (!done.has(n)) { juzAmma = false; break; }
-  return { surahs: done.size, juzAmma };
+  const surahs = getProgressBySurah(studentId)
+    .filter(row => row.ayahs_done >= (getSurah(row.surah_number)?.ayahs ?? Infinity)).length;
+  return { surahs };
+}
+
+// Per-juz progress, finished juz numbers, and the juz to show a bar for
+export function juzStats(studentId) {
+  const ranges = getMemorizedRanges(studentId);
+  const progress = juzProgress(ranges);
+  return {
+    progress,
+    completed: progress.filter(j => j.done >= j.total).map(j => j.n),
+    current: currentJuz(progress, ranges[ranges.length - 1]),
+  };
+}
+
+// "▰▰▰▰▱▱▱▱▱▱\nJuz 2 — 69 ayahs to go" (or the whole-Quran line when everything is done)
+export function juzLines(lang, current) {
+  if (!current) return [t(lang, 'progress_complete')];
+  return [bar(current.done, current.total), t(lang, 'juz_left', { n: current.n, left: current.total - current.done })];
 }
 
 // Current streak, or 0 if the last log was before yesterday (user's local time)
@@ -33,28 +48,24 @@ export async function handleProgress(ctx) {
   const ayahs = getTotalAyahs(user.id);
   if (ayahs === 0) return ctx.reply(t(lang, 'progress_empty'));
 
-  const { surahs, juzAmma } = surahStats(user.id);
+  const { surahs } = surahStats(user.id);
+  const juz = juzStats(user.id);
   const streak = liveStreak(user);
   const week = getAyahsLoggedSince(user.id, 7);
-  const goal = nextGoal(ayahs);
 
   const lines = [
     `<b>${escapeHtml(user.display_name)}</b>`,
     '',
-    t(lang, 'progress_main', { surahs, ayahs }),
+    t(lang, surahs > 0 ? 'progress_main' : 'progress_main_ayahs', { surahs, ayahs }),
     t(lang, 'progress_by_heart'),
     '',
   ];
 
-  if (goal) {
-    lines.push(goalBar(ayahs, goal), t(lang, 'progress_next', { goal, left: goal - ayahs }));
-  } else {
-    lines.push(t(lang, 'progress_complete'));
-  }
+  lines.push(...juzLines(lang, juz.current));
 
   // Only good news below — nothing is shown as a zero
   const badges = [];
-  if (juzAmma) badges.push(t(lang, 'progress_juz_amma'));
+  if (juz.completed.length) badges.push(t(lang, 'progress_juz_done', { n: juz.completed.length }));
   if (week > 0) badges.push(t(lang, 'progress_week', { n: week }));
   if (badges.length) lines.push('', badges.join('  ·  '));
 

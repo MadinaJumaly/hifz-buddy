@@ -92,19 +92,20 @@ export default {
 
   // ── progress, goals & sharing ─────────────────────────────────
   progress_main: `Surahs <b>{surahs}</b>   ·   Ayahs <b>{ayahs}</b>`,
+  progress_main_ayahs: `Ayahs <b>{ayahs}</b>`,
   progress_by_heart: `<i>memorized by heart</i>`,
-  progress_next: `Next goal <b>{goal}</b> — {left} to go`,
   progress_complete: `<b>The whole Quran</b> ✓`,
-  progress_juz_amma: `Juz Amma ✓`,
   progress_week: `+{n} this week`,
   progress_streak_on: `🔥 {n}-day streak`,
   progress_streak_best: ` · best {n}`,
   progress_streak_start: `Log today to start your streak 🔥`,
-  log_goal: `{left} to go until {goal}`,
   log_streak: `🔥 {n}-day streak`,
   milestone_goal: `🎉 <b>{goal} ayahs</b>\n\nMashaAllah, {name}! Another milestone on your hifz journey.`,
   share_btn: `↗ Share`,
   share_text: `Alhamdulillah! My hifz so far: {surahs} surahs, {ayahs} ayahs 🤍\nTracking it with HifzBuddy`,
   pair_friend_owner: `🤝 {name} joined through your link. You're now friends and will see each other's new memorization.`,
   pair_teacher_owner: `📖 {name} has connected to you as a student. You'll be notified of their progress.`,
+  juz_left: `Juz {n} — {left} ayahs to go`,
+  progress_juz_done: `{n} juz ✓`,
+  milestone_juz: `🎉 <b>Juz {n} complete</b>\n\nMashaAllah, {name}! May Allah keep it firm in your heart.`,
 };

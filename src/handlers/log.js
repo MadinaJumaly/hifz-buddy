@@ -6,10 +6,9 @@ import {
 } from '../services/db.js';
 import { validateAyahRange, getSurahName, getSurah } from '../data/quran.js';
 import { t } from '../utils/i18n.js';
-import {
-  GOALS, TOTAL_AYAHS, nextGoal, goalBar, escapeHtml, shareButton,
-} from '../utils/progress.js';
-import { surahStats } from './progress.js';
+import { GOALS, TOTAL_AYAHS, escapeHtml, shareButton } from '../utils/progress.js';
+import { juzOf } from '../data/juz.js';
+import { surahStats, juzStats, juzLines } from './progress.js';
 
 // Plain-text log: "2 255 257" (surah, from, to) or "112" (whole surah)
 export const LOG_TEXT_RE = /^\s*\d{1,3}(\s+\d{1,3}\s+\d{1,3})?\s*$/;
@@ -67,8 +66,8 @@ export async function logFromText(ctx, text) {
   const streak = updateStreak(ctx.user.id, ctx.user.timezone);
   const total = getTotalAyahs(ctx.user.id);
 
-  // One summary message: what was saved, progress to the next goal, streak
-  const goal = nextGoal(total);
+  // One summary message: what was saved, progress in the current juz, streak
+  const juz = juzStats(ctx.user.id);
   const lines = [
     escapeHtml(t(lang, 'log_success', {
       ar: check.surah.ar,
@@ -78,7 +77,7 @@ export async function logFromText(ctx, text) {
     })),
     '',
   ];
-  if (goal) lines.push(goalBar(total, goal), t(lang, 'log_goal', { goal, left: goal - total }));
+  lines.push(...juzLines(lang, juz.current));
   if (streak.current_streak > 0) lines.push('', t(lang, 'log_streak', { n: streak.current_streak }));
   if (notified > 0) lines.push('', escapeHtml(t(lang, 'log_notified')));
 
@@ -87,7 +86,9 @@ export async function logFromText(ctx, text) {
     ...Markup.inlineKeyboard([Markup.button.callback(t(lang, 'log_more'), 'log_more')]),
   });
 
-  await celebrateGoals(ctx, lang, total);
+  const touched = [];
+  for (let n = juzOf(surahNum, ayahFrom); n <= juzOf(surahNum, ayahTo); n++) touched.push(n);
+  await celebrateGoals(ctx, lang, total, juz.completed, touched);
 }
 
 // Returns how many people were notified
@@ -117,14 +118,18 @@ async function notifyContacts(ctx, surah, from, to) {
   return sent;
 }
 
-// Celebrate the highest newly reached goal (one message, even if several were passed)
-async function celebrateGoals(ctx, lang, total) {
+// One celebration per log, most meaningful first: whole Quran → a finished juz → an ayah goal.
+// A juz is only celebrated when this log is what finished it.
+async function celebrateGoals(ctx, lang, total, completedJuz, touchedJuz) {
   const userId = ctx.user.id;
   const name = escapeHtml(ctx.user.display_name);
 
+  const freshJuz = completedJuz.filter(n => touchedJuz.includes(n) && !hasMilestone(userId, `juz_${n}`));
+  completedJuz.forEach(n => saveMilestone(userId, `juz_${n}`));
+
   const fresh = GOALS.filter(g => total >= g && !hasMilestone(userId, `ayahs_${g}`));
   fresh.forEach(g => saveMilestone(userId, `ayahs_${g}`));
-  if (fresh.length === 0) return;
+  if (freshJuz.length === 0 && fresh.length === 0) return;
 
   const { surahs } = surahStats(userId);
   const share = Markup.inlineKeyboard([shareButton(ctx, lang, { surahs, ayahs: total })]);
@@ -132,6 +137,11 @@ async function celebrateGoals(ctx, lang, total) {
   if (total >= TOTAL_AYAHS && !hasMilestone(userId, 'khatm')) {
     saveMilestone(userId, 'khatm');
     return ctx.reply(t(lang, 'milestone_khatm', { name: ctx.user.display_name }), share);
+  }
+
+  if (freshJuz.length) {
+    const n = freshJuz[freshJuz.length - 1];
+    return ctx.reply(t(lang, 'milestone_juz', { n, name }), { parse_mode: 'HTML', ...share });
   }
 
   const goal = fresh[fresh.length - 1];

@@ -92,19 +92,20 @@ export default {
 
   // ── progress, goals & sharing ─────────────────────────────────
   progress_main: `Суры <b>{surahs}</b>   ·   Аяты <b>{ayahs}</b>`,
+  progress_main_ayahs: `Аяты <b>{ayahs}</b>`,
   progress_by_heart: `<i>выучено наизусть</i>`,
-  progress_next: `Следующая цель <b>{goal}</b> — осталось {left}`,
   progress_complete: `<b>Весь Коран</b> ✓`,
-  progress_juz_amma: `Джуз Амма ✓`,
   progress_week: `+{n} за неделю`,
   progress_streak_on: `🔥 Дней подряд: {n}`,
   progress_streak_best: ` · рекорд {n}`,
   progress_streak_start: `Запишите сегодня — начните серию 🔥`,
-  log_goal: `До {goal}: осталось {left}`,
   log_streak: `🔥 Дней подряд: {n}`,
   milestone_goal: `🎉 <b>{goal} аятов</b>\n\nМашаАллах, {name}! Ещё одна вершина на пути хифза.`,
   share_btn: `↗ Поделиться`,
   share_text: `АльхамдулиЛлях! Мой хифз: суры — {surahs}, аяты — {ayahs} 🤍\nОтслеживаю в HifzBuddy`,
   pair_friend_owner: `🤝 {name} присоединился(-ась) по вашей ссылке. Теперь вы друзья и будете видеть новое заучивание друг друга.`,
   pair_teacher_owner: `📖 {name} подключился(-ась) к вам как ученик. Вы будете получать уведомления о его/её прогрессе.`,
+  juz_left: `Джуз {n} — осталось аятов: {left}`,
+  progress_juz_done: `Завершено джузов: {n} ✓`,
+  milestone_juz: `🎉 <b>Джуз {n} завершён</b>\n\nМашаАллах, {name}! Да укрепит Аллах его в вашем сердце.`,
 };

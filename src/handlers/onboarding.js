@@ -105,6 +105,8 @@ export async function handleOnboardingDone(ctx) {
     if (totalAyahs >= goal) saveMilestone(ctx.user.id, `ayahs_${goal}`);
   }
   if (totalAyahs >= TOTAL_AYAHS) saveMilestone(ctx.user.id, 'khatm');
+  const { juzStats } = await import('./progress.js');
+  juzStats(ctx.user.id).completed.forEach(n => saveMilestone(ctx.user.id, `juz_${n}`));
 
   await ctx.editMessageText(
     t(lang, 'onboarding_done', { count: totalAyahs }) +
