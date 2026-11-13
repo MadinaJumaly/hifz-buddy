@@ -53,16 +53,18 @@ export async function applyInvite(ctx, type, slug) {
     try {
       await ctx.telegram.sendMessage(
         ownerUser.telegram_id,
-        `📖 ${ctx.user.display_name} has connected to you as a student.`
+        t(ownerUser.language, 'pair_teacher_owner', { name: ctx.user.display_name }),
       );
     } catch {}
   } else {
+    // Friends see each other's progress, so pair both ways
     pairFriend(ctx.user.id, ownerUser.id);
+    pairFriend(ownerUser.id, ctx.user.id);
     await ctx.reply(t(lang, 'pair_friend_done', { name: ownerUser.display_name }));
     try {
       await ctx.telegram.sendMessage(
         ownerUser.telegram_id,
-        `📖 ${ctx.user.display_name} has added you as a companion.`
+        t(ownerUser.language, 'pair_friend_owner', { name: ctx.user.display_name }),
       );
     } catch {}
   }

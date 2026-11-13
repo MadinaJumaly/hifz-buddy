@@ -24,4 +24,15 @@ export function migrate(db) {
 
   // city name shown in settings
   addColumn('ALTER TABLE users ADD COLUMN city TEXT');
+
+  // One-time data migrations, tracked with SQLite's user_version
+  const version = db.pragma('user_version', { simple: true });
+  if (version < 1) {
+    // v1: friend pairs became mutual — add the missing reverse direction
+    db.exec(`
+      INSERT OR IGNORE INTO friend_pairs (student_id, friend_id, paired_at)
+      SELECT friend_id, student_id, paired_at FROM friend_pairs WHERE active = 1
+    `);
+    db.pragma('user_version = 1');
+  }
 }

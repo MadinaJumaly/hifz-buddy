@@ -22,7 +22,7 @@ export default {
   pair_teacher_done:
     `You are now connected to your teacher {name}. They will be notified of your progress. BarakAllahu feek!`,
   pair_friend_done:
-    `{name} has been added as your companion. They will receive updates on your memorization.`,
+    `🤝 You and {name} are now friends. You'll each see the other's new memorization. BarakAllahu feekum!`,
   pair_already_teacher: `You already have an active teacher. Use /unpair first.`,
 
   generate_code_teacher:
@@ -105,4 +105,6 @@ export default {
   milestone_goal: `🎉 <b>{goal} ayahs</b>\n\nMashaAllah, {name}! Another milestone on your hifz journey.`,
   share_btn: `↗ Share`,
   share_text: `Alhamdulillah! My hifz so far: {surahs} surahs, {ayahs} ayahs 🤍\nTracking it with HifzBuddy`,
+  pair_friend_owner: `🤝 {name} joined through your link. You're now friends and will see each other's new memorization.`,
+  pair_teacher_owner: `📖 {name} has connected to you as a student. You'll be notified of their progress.`,
 };
