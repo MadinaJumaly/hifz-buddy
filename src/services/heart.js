@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import { t } from '../utils/i18n.js';
 import { TOTAL_AYAHS } from '../utils/progress.js';
 import {
-  W, PAD, C, SANS, SERIF, esc, upper, drawable, truncate, formatDate, background, toPng,
+  W, PAD, C, SANS, SERIF, esc, upper, formatDate, background, toPng,
 } from './card.js';
 
 // "My heart" card: a tiled heart whose tiles fill with gold (nur) from the bottom up,
@@ -50,7 +50,6 @@ function telegramLogo(x, y, size) {
 /**
  * @param {object} d
  * @param {string} d.lang
- * @param {string} d.name
  * @param {number} d.ayahs
  * @param {string} d.botUsername
  * @param {string} [d.timezone]
@@ -62,8 +61,8 @@ export function renderHeart(d) {
 
   // Fit the heart's bounding box into the space between header and footer
   const [bx, by, bw, bh] = HEART.bbox;
-  const areaTop = 330;
-  const areaH = 840;
+  const areaTop = 300;
+  const areaH = 870;
   const scale = areaH / bh;
   const ox = (W - bw * scale) / 2 - bx * scale;
   const oy = areaTop - by * scale;
@@ -79,11 +78,10 @@ export function renderHeart(d) {
     </filter>
   </defs>
 
-  <text x="${PAD}" y="150" ${SANS} font-weight="500" font-size="24" letter-spacing="6" fill="${C.teal}">${esc(upper(t(lang, 'heart_kicker'), lang))}</text>
-  <text x="${PAD - 2}" y="236" ${SERIF} font-size="60" fill="${C.ink}">${esc(truncate(drawable(d.name), 14))}</text>
+  <text x="${PAD}" y="170" ${SANS} font-weight="500" font-size="30" letter-spacing="7" fill="${C.teal}">${esc(upper(t(lang, 'heart_kicker'), lang))}</text>
 
-  <text x="${W - PAD}" y="226" ${SERIF} font-size="120" fill="${C.teal}" text-anchor="end">${esc(formatPercent(d.ayahs))}</text>
-  <text x="${W - PAD}" y="272" ${SANS} font-weight="400" font-size="24" fill="${C.inkSoft}" text-anchor="end">${esc(t(lang, 'heart_label'))}</text>
+  <text x="${W - PAD}" y="200" ${SERIF} font-size="120" fill="${C.teal}" text-anchor="end">${esc(formatPercent(d.ayahs))}</text>
+  <text x="${W - PAD}" y="246" ${SANS} font-weight="400" font-size="24" fill="${C.inkSoft}" text-anchor="end">${esc(t(lang, 'heart_label'))}</text>
 
   <g transform="translate(${ox} ${oy}) scale(${scale})">
     <g fill="${C.cell}" fill-opacity="0.8" filter="url(#soft)">${empty}</g>

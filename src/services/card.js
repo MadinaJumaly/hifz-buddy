@@ -42,16 +42,6 @@ export function upper(s, lang) {
   return s.toLocaleUpperCase(LOCALES[lang] || 'en');
 }
 
-// Keep only characters the bundled fonts can draw (Latin + Cyrillic); drops emoji etc.
-export function drawable(s) {
-  return String(s).replace(/[^ -ɏЀ-ӿ‐-›]/gu, '').replace(/\s+/g, ' ').trim();
-}
-
-export function truncate(s, max) {
-  const chars = [...s];
-  return chars.length > max ? chars.slice(0, max - 1).join('') + '…' : s;
-}
-
 export function formatDate(lang, timezone) {
   try {
     return new Intl.DateTimeFormat(LOCALES[lang] || 'en-GB', {
@@ -160,7 +150,6 @@ function juzGrid(progress, top) {
 /**
  * @param {object} d
  * @param {string} d.lang        'en' | 'ru' | 'kz'
- * @param {string} d.name
  * @param {number} d.ayahs
  * @param {number} d.surahs
  * @param {number} d.juzDone     finished juz count
@@ -184,24 +173,23 @@ export function renderCard(d) {
   const colW = (W - PAD * 2) / 3;
   const statsSvg = stats.map((s, i) => {
     const x = PAD + i * colW;
-    return `<text x="${x}" y="820" ${SERIF} font-size="76" fill="${C.ink}">${s.value}</text>`
-      + `<text x="${x + 2}" y="864" ${SANS} font-weight="500" font-size="20" letter-spacing="3" fill="${C.inkSoft}">${esc(upper(s.label, lang))}</text>`;
+    return `<text x="${x}" y="770" ${SERIF} font-size="76" fill="${C.ink}">${s.value}</text>`
+      + `<text x="${x + 2}" y="814" ${SANS} font-weight="500" font-size="20" letter-spacing="3" fill="${C.inkSoft}">${esc(upper(s.label, lang))}</text>`;
   }).join('');
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   ${background()}
 
-  <text x="${PAD}" y="150" ${SANS} font-weight="500" font-size="24" letter-spacing="6" fill="${C.teal}">${esc(kicker)}</text>
-  <text x="${PAD - 2}" y="236" ${SERIF} font-size="60" fill="${C.ink}">${esc(truncate(drawable(d.name), 18))}</text>
+  <text x="${PAD}" y="170" ${SANS} font-weight="500" font-size="30" letter-spacing="7" fill="${C.teal}">${esc(kicker)}</text>
 
-  ${emblem(820, 330, 1.05)}
+  ${emblem(820, 270, 1.05)}
 
-  <text x="${PAD - 8}" y="560" ${SERIF} font-size="280" fill="${C.teal}">${d.ayahs}</text>
-  <text x="${PAD}" y="688" ${SANS} font-weight="400" font-size="30" fill="${C.inkSoft}">${esc(t(lang, 'card_ayahs_label'))}</text>
+  <text x="${PAD - 8}" y="500" ${SERIF} font-size="280" fill="${C.teal}">${d.ayahs}</text>
+  <text x="${PAD}" y="628" ${SANS} font-weight="400" font-size="30" fill="${C.inkSoft}">${esc(t(lang, 'card_ayahs_label'))}</text>
 
   ${statsSvg}
 
-  ${juzGrid(d.juz, 940)}
+  ${juzGrid(d.juz, 900)}
 
   <text x="${PAD}" y="1270" ${SANS} font-weight="400" font-size="24" fill="${C.inkSoft}">@${esc(d.botUsername)}</text>
   <text x="${W - PAD}" y="1270" ${SANS} font-weight="400" font-size="24" fill="${C.inkSoft}" text-anchor="end">${esc(formatDate(lang, d.timezone))}</text>

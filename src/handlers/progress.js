@@ -59,7 +59,6 @@ export async function sendCard(ctx, { caption, headline } = {}) {
   try {
     const png = renderCard({
       lang,
-      name: user.display_name,
       ayahs,
       surahs,
       juzDone: juz.completed.length,
@@ -94,7 +93,7 @@ export async function handleHeart(ctx) {
 
   try {
     const png = renderHeart({
-      lang, name: user.display_name, ayahs, botUsername: ctx.botInfo.username, timezone: user.timezone,
+      lang, ayahs, botUsername: ctx.botInfo.username, timezone: user.timezone,
     });
     const msg = await ctx.replyWithPhoto({ source: png, filename: 'my-heart.png' }, {
       caption, parse_mode: 'HTML', ...keyboard,
