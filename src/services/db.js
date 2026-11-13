@@ -161,6 +161,50 @@ export function getTotalAyahs(studentId) {
   return row.total;
 }
 
+function surahRows(studentId, surahNumber) {
+  return db.prepare(`
+    SELECT * FROM memorized_ayahs WHERE student_id = ? AND surah_number = ? ORDER BY ayah_from
+  `).all(studentId, surahNumber);
+}
+
+// Remove ayahs from..to of a surah. Rows that only partly overlap are split, keeping
+// their source and logged_at. Returns how many ayahs were removed.
+export const removeAyahs = db.transaction((studentId, surahNumber, from, to) => {
+  let removed = 0;
+  const insert = db.prepare(`
+    INSERT INTO memorized_ayahs (student_id, surah_number, ayah_from, ayah_to, source, logged_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  for (const row of surahRows(studentId, surahNumber)) {
+    if (row.ayah_to < from || row.ayah_from > to) continue;
+    removed += Math.min(row.ayah_to, to) - Math.max(row.ayah_from, from) + 1;
+    db.prepare('DELETE FROM memorized_ayahs WHERE id = ?').run(row.id);
+    if (row.ayah_from < from) insert.run(studentId, surahNumber, row.ayah_from, from - 1, row.source, row.logged_at);
+    if (row.ayah_to > to) insert.run(studentId, surahNumber, to + 1, row.ayah_to, row.source, row.logged_at);
+  }
+  return removed;
+});
+
+// Mark ayahs from..to as memorized, adding only the gaps that aren't recorded yet.
+// Returns how many ayahs were added.
+export const addMissingAyahs = db.transaction((studentId, surahNumber, from, to, source = 'onboarding') => {
+  let added = 0;
+  let cursor = from;
+  const add = (a, b) => {
+    if (a > b) return;
+    logAyahs({ studentId, surahNumber, ayahFrom: a, ayahTo: b, source });
+    added += b - a + 1;
+  };
+  for (const row of surahRows(studentId, surahNumber)) {
+    if (row.ayah_to < cursor) continue;
+    if (row.ayah_from > to) break;
+    add(cursor, Math.min(row.ayah_from - 1, to));
+    cursor = Math.max(cursor, row.ayah_to + 1);
+  }
+  add(cursor, to);
+  return added;
+});
+
 // All memorized ranges, oldest first (last row = most recent log)
 export function getMemorizedRanges(studentId) {
   return db.prepare(`

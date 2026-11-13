@@ -4,8 +4,8 @@ import { CITY_BUTTONS, getCityButton, resolveTimezone } from '../data/cities.js'
 import { LANGUAGE_NAMES, mainMenu } from '../utils/menu.js';
 import { t } from '../utils/i18n.js';
 
-// Setup flow: language → city → already-memorized surahs → done.
-// The display name comes from the Telegram profile, so there's nothing to type.
+// Setup flow: language → confirm name → city → already-memorized surahs → done.
+// The name defaults to the Telegram first name; the user confirms it with one tap or types another.
 
 const INVITE_RE = /^(friend|teacher)_([A-Z0-9]+)$/i;
 
@@ -54,7 +54,18 @@ export async function handleStart(ctx) {
   );
 }
 
-// Language chosen → short intro + city buttons
+// Clean up a typed name; null if unusable
+export function cleanName(text) {
+  const name = String(text).replace(/\s+/g, ' ').trim();
+  if (!name || name.startsWith('/') || [...name].length > 40) return null;
+  return name;
+}
+
+function telegramName(ctx) {
+  return cleanName(ctx.from.first_name || '') || cleanName(ctx.from.username || '') || null;
+}
+
+// Language chosen → short intro + "is this your name?"
 export async function handleLanguageChoice(ctx) {
   await ctx.answerCbQuery();
   const lang = ctx.callbackQuery.data.split('_')[1];
@@ -63,8 +74,44 @@ export async function handleLanguageChoice(ctx) {
   ctx.session.pendingLang = lang;
   ctx.session.step = null;
 
-  const name = ctx.from.first_name || '';
-  await ctx.editMessageText(t(lang, 'welcome', { name }), cityKeyboard(lang, 'city_'));
+  const name = telegramName(ctx);
+  if (!name) {
+    ctx.session.step = 'awaiting_name';
+    return ctx.editMessageText(`${t(lang, 'welcome')}\n\n${t(lang, 'name_prompt')}`);
+  }
+
+  await ctx.editMessageText(`${t(lang, 'welcome')}\n\n${t(lang, 'name_confirm', { name })}`,
+    Markup.inlineKeyboard([
+      [Markup.button.callback(`✅ ${name}`, 'name_ok')],
+      [Markup.button.callback(t(lang, 'name_other_btn'), 'name_edit')],
+    ]));
+}
+
+// "✅ Madina"
+export async function handleNameOk(ctx) {
+  await ctx.answerCbQuery();
+  const lang = ctx.session?.pendingLang || 'en';
+  ctx.session.pendingName = telegramName(ctx);
+  ctx.session.step = null;
+  await ctx.editMessageText(t(lang, 'ask_city'), cityKeyboard(lang, 'city_'));
+}
+
+// "✏️ Another name"
+export async function handleNameEdit(ctx) {
+  await ctx.answerCbQuery();
+  const lang = ctx.session?.pendingLang || 'en';
+  ctx.session.step = 'awaiting_name';
+  await ctx.editMessageText(t(lang, 'name_prompt'));
+}
+
+// Typed name during setup
+export async function handleNameInput(ctx) {
+  const lang = ctx.session?.pendingLang || 'en';
+  const name = cleanName(ctx.message.text);
+  if (!name) return ctx.reply(t(lang, 'name_invalid'));
+  ctx.session.pendingName = name;
+  ctx.session.step = null;
+  await ctx.reply(t(lang, 'ask_city'), cityKeyboard(lang, 'city_'));
 }
 
 // City button tapped during setup
@@ -94,7 +141,7 @@ export async function handleCityInput(ctx) {
 
 // Create (or update, if setup was abandoned earlier) the user, then ask for surahs
 async function finishProfile(ctx, lang, city, tz) {
-  const displayName = (ctx.from.first_name || ctx.from.username || 'Friend').slice(0, 60);
+  const displayName = ctx.session?.pendingName || telegramName(ctx) || 'Friend';
 
   let user = getUserByTelegramId(ctx.from.id);
   if (user) {

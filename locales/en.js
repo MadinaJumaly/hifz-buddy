@@ -51,7 +51,7 @@ export default {
   back:                `Back`,
 
   // ── setup, menu, logging & settings ──────────────────────────
-  welcome: `Assalamu Alaykum, {name}! 🌙\n\nHifzBuddy helps you keep track of your Quran memorization:\n• log new ayahs in a few seconds\n• see your progress and streak\n• keep your teacher and friends updated\n\n📍 Which city are you in? It's used for reminder times.`,
+  welcome: `Assalamu Alaykum! 🌙\n\nHifzBuddy helps you keep track of your Quran memorization:\n• log new ayahs in a few seconds\n• see your progress and streak\n• keep your teacher and friends updated`,
   welcome_back: `Assalamu Alaykum, {name}! 🌙 Your menu is below.`,
   city_other: `Other`,
   city_type_prompt: `Type the name of your city:`,
@@ -62,7 +62,7 @@ export default {
   onboarding_done: `MashaAllah! Saved {count} ayahs you already know. 🤲\n\nTo log new memorization, tap 📖 or just send:\n• 2 255 257 — surah 2, ayahs 255–257\n• 112 — the whole surah\n\nKnow part of a surah already? Send it the same way.`,
   menu_ready: `Here's your menu 👇`,
   menu_hint: `To log memorization, just send the surah and ayahs, e.g. 2 255 257\nOr use the menu below 👇`,
-  log_prompt: `Send the surah number and ayahs:\n\n• 2 255 257 — surah 2, ayahs 255–257\n• 112 — the whole surah`,
+  log_prompt: `Send the surah number and ayahs:\n\n• 2 255 257 — surah 2, ayahs 255–257\n• 112 — the whole surah\n\nMarked something by mistake? Send it with a minus: -2 255 257`,
   log_usage: `Send: /partial [surah] [from] [to]\nExample: /partial 2 1 10`,
   log_success: `✅ Saved: {ar} — {name}, ayahs {from}–{to}`,
   log_more: `➕ Log more`,
@@ -125,4 +125,18 @@ export default {
   heart_label: `of the Quran is in my heart`,
   heart_btn: `🤍 My heart`,
   heart_caption: `🤍 <b>{pct}</b> of the Quran is in your heart.\n\nMay Allah fill it with His light.`,
+
+  // ── name & memorization review ────────────────────────────────
+  name_confirm: `👤 Is this your name? Your teacher and friends will see it.`,
+  name_prompt: `👤 Type the name you'd like to use:`,
+  name_invalid: `Please send a name up to 40 characters.`,
+  name_other_btn: `✏️ Another name`,
+  ask_city: `📍 Which city are you in? It's used for reminder times.`,
+  settings_name: `👤 Name: {name}`,
+  settings_memorized: `📚 My memorization`,
+  mem_title: `📚 Your memorization\n\nTap a surah to mark or unmark it:\n✓ fully memorized · ◐ partly\n\nTo remove only some ayahs, send e.g. -2 1 5`,
+  mem_toast_added: `✓ {name} marked as memorized`,
+  mem_toast_removed: `{name} removed`,
+  mem_nothing: `Those ayahs aren't marked as memorized.`,
+  mem_removed: `🗑 Removed: {ar} — {name}, ayahs {from}–{to}`,
 };

@@ -12,6 +12,9 @@ import {
   handleLanguageChoice,
   handleCityChoice,
   handleCityInput,
+  handleNameOk,
+  handleNameEdit,
+  handleNameInput,
 } from './handlers/start.js';
 
 import {
@@ -25,7 +28,12 @@ import { handleLog, handleLogPrompt, logFromText, LOG_TEXT_RE } from './handlers
 import { handleProgress, handleHeart } from './handlers/progress.js';
 import { handleInlineQuery } from './handlers/share.js';
 import { handleReminder } from './handlers/reminder.js';
-import { handleSettings, handleSettingsAction, handleSettingsCityInput } from './handlers/settings.js';
+import {
+  handleSettings, handleSettingsAction, handleSettingsCityInput, handleSettingsNameInput,
+} from './handlers/settings.js';
+import {
+  handleMemorized, handleMemorizedAction, handleRemoveText, REMOVE_TEXT_RE,
+} from './handlers/memorized.js';
 
 import {
   handleGenerateTeacher,
@@ -45,6 +53,8 @@ bot.use(userMiddleware);
 // setup
 bot.start(handleStart);
 bot.action(/^lang_/, handleLanguageChoice);
+bot.action('name_ok', handleNameOk);
+bot.action('name_edit', handleNameEdit);
 bot.action(/^city_/, handleCityChoice);
 bot.action(/^ob_surah_/, handleSurahToggle);
 bot.action(/^ob_page_/, handlePageNav);
@@ -69,6 +79,8 @@ bot.on('inline_query', handleInlineQuery);
 // inline buttons
 bot.action('log_more', handleLogPrompt);
 bot.action('heart', handleHeart);
+bot.action(/^mem_/, handleMemorizedAction);
+bot.command('memorized', (ctx) => handleMemorized(ctx, 1));
 bot.command('heart', handleHeart);
 bot.action(/^set_/, handleSettingsAction);
 bot.action('unpair_yes', handleUnpairConfirm);
@@ -80,7 +92,7 @@ bot.on('text', async (ctx) => {
   const step = ctx.session?.step;
 
   const button = matchMenuButton(text);
-  if (button && ctx.session?.step === 'settings_city') ctx.session.step = null;
+  if (button && ['settings_city', 'settings_name'].includes(ctx.session?.step)) ctx.session.step = null;
 
   switch (button) {
     case 'log': return handleLogPrompt(ctx);
@@ -90,7 +102,9 @@ bot.on('text', async (ctx) => {
     case 'teacher': return handleGenerateTeacher(ctx);
   }
 
+  if (step === 'awaiting_name') return handleNameInput(ctx);
   if (step === 'awaiting_city') return handleCityInput(ctx);
+  if (step === 'settings_name' && ctx.user) return handleSettingsNameInput(ctx);
   if (step === 'settings_city' && ctx.user) return handleSettingsCityInput(ctx);
 
   if (!ctx.user || !ctx.user.onboarding_done) {
@@ -98,6 +112,7 @@ bot.on('text', async (ctx) => {
   }
 
   if (LOG_TEXT_RE.test(text)) return logFromText(ctx, text);
+  if (REMOVE_TEXT_RE.test(text)) return handleRemoveText(ctx, text);
 
   // Anything else: show the menu with a hint
   return ctx.reply(t(ctx.user.language, 'menu_hint'), mainMenu(ctx.user.language));

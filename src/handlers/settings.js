@@ -6,6 +6,8 @@ import { t } from '../utils/i18n.js';
 import { languageKeyboard, cityKeyboard } from './start.js';
 import { setReminder } from './reminder.js';
 import { handleGenerateFriend, handleGenerateTeacher } from './pairing.js';
+import { cleanName } from './start.js';
+import { handleMemorized } from './memorized.js';
 
 // One settings message that is edited in place. Each row shows the current value.
 
@@ -24,6 +26,8 @@ function settingsView(user) {
   return {
     text: t(lang, 'settings_title'),
     keyboard: Markup.inlineKeyboard([
+      [Markup.button.callback(t(lang, 'settings_name', { name: user.display_name }), 'set_name')],
+      [Markup.button.callback(t(lang, 'settings_memorized'), 'set_mem')],
       [Markup.button.callback(t(lang, 'settings_city', { city: cityLabel(user) }), 'set_city')],
       [Markup.button.callback(t(lang, 'settings_lang', { lang: LANGUAGE_NAMES[lang] }), 'set_lang')],
       [Markup.button.callback(reminder, 'set_rem')],
@@ -69,6 +73,15 @@ export async function handleSettingsAction(ctx) {
   switch (action) {
     case 'back':
       return handleSettings(ctx);
+
+    case 'name':
+      await ctx.answerCbQuery();
+      ctx.session.step = 'settings_name';
+      return show(ctx, t(lang, 'name_prompt'), Markup.inlineKeyboard([backRow(lang)]));
+
+    case 'mem':
+      await ctx.answerCbQuery();
+      return handleMemorized(ctx, 1);
 
     case 'city':
       await ctx.answerCbQuery();
@@ -134,6 +147,17 @@ export async function handleSettingsAction(ctx) {
     default:
       return ctx.answerCbQuery();
   }
+}
+
+// New name typed in settings
+export async function handleSettingsNameInput(ctx) {
+  const lang = ctx.user.language;
+  const name = cleanName(ctx.message.text);
+  if (!name) return ctx.reply(t(lang, 'name_invalid'));
+  ctx.session.step = null;
+  updateUser(ctx.user.id, { display_name: name });
+  reload(ctx);
+  return handleSettings(ctx);
 }
 
 // City typed after tapping "Other" in settings
