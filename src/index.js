@@ -22,7 +22,7 @@ import {
 } from './handlers/onboarding.js';
 
 import { handleLog, handleLogPrompt, logFromText, LOG_TEXT_RE } from './handlers/log.js';
-import { handleProgress } from './handlers/progress.js';
+import { handleProgress, handleHeart } from './handlers/progress.js';
 import { handleInlineQuery } from './handlers/share.js';
 import { handleReminder } from './handlers/reminder.js';
 import { handleSettings, handleSettingsAction, handleSettingsCityInput } from './handlers/settings.js';
@@ -68,6 +68,8 @@ bot.on('inline_query', handleInlineQuery);
 
 // inline buttons
 bot.action('log_more', handleLogPrompt);
+bot.action('heart', handleHeart);
+bot.command('heart', handleHeart);
 bot.action(/^set_/, handleSettingsAction);
 bot.action('unpair_yes', handleUnpairConfirm);
 bot.action('unpair_no', handleUnpairCancel);

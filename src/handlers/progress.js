@@ -9,6 +9,7 @@ import { bar, escapeHtml, shareButton } from '../utils/progress.js';
 import { localDate, previousDate } from '../utils/time.js';
 import { updateUser } from '../services/db.js';
 import { renderCard } from '../services/card.js';
+import { renderHeart, formatPercent } from '../services/heart.js';
 
 // Number of fully memorized surahs
 export function surahStats(studentId) {
@@ -50,7 +51,10 @@ export async function sendCard(ctx, { caption, headline } = {}) {
   const ayahs = getTotalAyahs(user.id);
   const { surahs } = surahStats(user.id);
   const juz = juzStats(user.id);
-  const keyboard = Markup.inlineKeyboard([shareButton(ctx, lang, { surahs, ayahs })]);
+  const keyboard = Markup.inlineKeyboard([[
+    shareButton(ctx, lang, { surahs, ayahs }),
+    Markup.button.callback(t(lang, 'heart_btn'), 'heart'),
+  ]]);
 
   try {
     const png = renderCard({
@@ -73,6 +77,34 @@ export async function sendCard(ctx, { caption, headline } = {}) {
   } catch (err) {
     console.error('Card failed, sending text instead:', err.message);
     await ctx.reply(caption, { parse_mode: 'HTML', ...keyboard });
+  }
+}
+
+// "🤍 My heart" button: the heart card, filled with gold by how much is memorized
+export async function handleHeart(ctx) {
+  const user = ctx.user;
+  const lang = user?.language || 'en';
+  if (ctx.callbackQuery) await ctx.answerCbQuery();
+  if (!user || !user.onboarding_done) return ctx.reply(t(lang, 'setup_first'));
+
+  const ayahs = getTotalAyahs(user.id);
+  const { surahs } = surahStats(user.id);
+  const caption = t(lang, 'heart_caption', { pct: formatPercent(ayahs) });
+  const keyboard = Markup.inlineKeyboard([shareButton(ctx, lang, { surahs, ayahs })]);
+
+  try {
+    const png = renderHeart({
+      lang, name: user.display_name, ayahs, botUsername: ctx.botInfo.username, timezone: user.timezone,
+    });
+    const msg = await ctx.replyWithPhoto({ source: png, filename: 'my-heart.png' }, {
+      caption, parse_mode: 'HTML', ...keyboard,
+    });
+    // Newest image is what inline Share posts
+    const fileId = msg?.photo?.[msg.photo.length - 1]?.file_id;
+    if (fileId) updateUser(user.id, { card_file_id: fileId });
+  } catch (err) {
+    console.error('Heart card failed:', err.message);
+    await ctx.reply(t(lang, 'error_generic'));
   }
 }
 

@@ -119,4 +119,10 @@ export default {
   card_head_goal: `{goal} ayahs`,
   card_head_khatm: `The whole Quran`,
   inline_no_card: `Open the bot to create your card`,
+
+  // ── heart card ────────────────────────────────────────────────
+  heart_kicker: `My heart`,
+  heart_label: `of the Quran is in my heart`,
+  heart_btn: `🤍 My heart`,
+  heart_caption: `🤍 <b>{pct}</b> of the Quran is in your heart.\n\nMay Allah fill it with His light.`,
 };

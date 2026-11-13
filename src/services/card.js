@@ -8,14 +8,14 @@ import { t } from '../utils/i18n.js';
 // Fonts are bundled in assets/fonts so the card looks the same on any server.
 
 const FONT_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../assets/fonts');
-const FONT_FILES = ['Inter-Regular.ttf', 'Inter-Medium.ttf', 'PlayfairDisplay[wght].ttf']
+export const FONT_FILES = ['Inter-Regular.ttf', 'Inter-Medium.ttf', 'PlayfairDisplay[wght].ttf']
   .map(f => join(FONT_DIR, f));
 
-const W = 1080;
-const H = 1350;
-const PAD = 96;
+export const W = 1080;
+export const H = 1350;
+export const PAD = 96;
 
-const C = {
+export const C = {
   skyTop: '#CFEAFB',
   skyBottom: '#EAF6FE',
   ink: '#1D4D66',       // main text
@@ -29,30 +29,30 @@ const C = {
   cellText: '#9BB9CB',
 };
 
-const SANS = 'font-family="Inter"';
-const SERIF = 'font-family="Playfair Display"';
+export const SANS = 'font-family="Inter"';
+export const SERIF = 'font-family="Playfair Display"';
 
 const LOCALES = { en: 'en-GB', ru: 'ru-RU', kz: 'kk-KZ' };
 
-function esc(s) {
+export function esc(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function upper(s, lang) {
+export function upper(s, lang) {
   return s.toLocaleUpperCase(LOCALES[lang] || 'en');
 }
 
 // Keep only characters the bundled fonts can draw (Latin + Cyrillic); drops emoji etc.
-function drawable(s) {
+export function drawable(s) {
   return String(s).replace(/[^ -ɏЀ-ӿ‐-›]/gu, '').replace(/\s+/g, ' ').trim();
 }
 
-function truncate(s, max) {
+export function truncate(s, max) {
   const chars = [...s];
   return chars.length > max ? chars.slice(0, max - 1).join('') + '…' : s;
 }
 
-function formatDate(lang, timezone) {
+export function formatDate(lang, timezone) {
   try {
     return new Intl.DateTimeFormat(LOCALES[lang] || 'en-GB', {
       day: 'numeric', month: 'long', year: 'numeric', timeZone: timezone || 'UTC',
@@ -60,6 +60,39 @@ function formatDate(lang, timezone) {
   } catch {
     return new Date().toISOString().slice(0, 10);
   }
+}
+
+// Shared gradients/filters + sky background (used by every card)
+export function background() {
+  return `<defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${C.skyTop}"/>
+      <stop offset="1" stop-color="${C.skyBottom}"/>
+    </linearGradient>
+    <radialGradient id="haze" cx="0.85" cy="0.12" r="0.6">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cloud" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DCEAF5"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FBE08A"/>
+      <stop offset="1" stop-color="${C.gold}"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#5A9CC4" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <rect width="${W}" height="${H}" fill="url(#sky)"/>
+  <rect width="${W}" height="${H}" fill="url(#haze)"/>`;
+}
+
+export function toPng(svg) {
+  return new Resvg(svg, {
+    font: { fontFiles: FONT_FILES, loadSystemFonts: false, defaultFontFamily: 'Inter' },
+  }).render().asPng();
 }
 
 // 8-point star (two rotated rounded squares) with a crescent, resting on a cloud
@@ -156,30 +189,7 @@ export function renderCard(d) {
   }).join('');
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-  <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="${C.skyTop}"/>
-      <stop offset="1" stop-color="${C.skyBottom}"/>
-    </linearGradient>
-    <radialGradient id="haze" cx="0.85" cy="0.12" r="0.6">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.7"/>
-      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="cloud" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FFFFFF"/>
-      <stop offset="1" stop-color="#DCEAF5"/>
-    </linearGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FBE08A"/>
-      <stop offset="1" stop-color="${C.gold}"/>
-    </linearGradient>
-    <filter id="soft" x="-20%" y="-20%" width="140%" height="160%">
-      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#5A9CC4" flood-opacity="0.22"/>
-    </filter>
-  </defs>
-  <rect width="${W}" height="${H}" fill="url(#sky)"/>
-  <rect width="${W}" height="${H}" fill="url(#haze)"/>
-
+  ${background()}
 
   <text x="${PAD}" y="150" ${SANS} font-weight="500" font-size="24" letter-spacing="6" fill="${C.teal}">${esc(kicker)}</text>
   <text x="${PAD - 2}" y="236" ${SERIF} font-size="60" fill="${C.ink}">${esc(truncate(drawable(d.name), 18))}</text>
@@ -197,8 +207,5 @@ export function renderCard(d) {
   <text x="${W - PAD}" y="1270" ${SANS} font-weight="400" font-size="24" fill="${C.inkSoft}" text-anchor="end">${esc(formatDate(lang, d.timezone))}</text>
 </svg>`;
 
-  const resvg = new Resvg(svg, {
-    font: { fontFiles: FONT_FILES, loadSystemFonts: false, defaultFontFamily: 'Inter' },
-  });
-  return resvg.render().asPng();
+  return toPng(svg);
 }
