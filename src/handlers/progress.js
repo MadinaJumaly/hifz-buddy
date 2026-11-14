@@ -88,12 +88,15 @@ export async function handleHeart(ctx) {
 
   const ayahs = getTotalAyahs(user.id);
   const { surahs } = surahStats(user.id);
-  const caption = t(lang, 'heart_caption', { pct: formatPercent(ayahs) });
+  const surahDone = new Map(getProgressBySurah(user.id).map(r => [r.surah_number, r.ayahs_done]));
+  const caption = surahs > 0
+    ? t(lang, 'heart_caption', { surahs, pct: formatPercent(ayahs) })
+    : t(lang, 'heart_caption_pct', { pct: formatPercent(ayahs) });
   const keyboard = Markup.inlineKeyboard([shareButton(ctx, lang, { surahs, ayahs })]);
 
   try {
     const png = renderHeart({
-      lang, ayahs, botUsername: ctx.botInfo.username, timezone: user.timezone,
+      lang, ayahs, surahDone, botUsername: ctx.botInfo.username, timezone: user.timezone,
     });
     const msg = await ctx.replyWithPhoto({ source: png, filename: 'my-heart.png' }, {
       caption, parse_mode: 'HTML', ...keyboard,

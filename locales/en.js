@@ -124,7 +124,7 @@ export default {
   heart_kicker: `My heart`,
   heart_label: `of the Quran is in my heart`,
   heart_btn: `🤍 My heart`,
-  heart_caption: `🤍 <b>{pct}</b> of the Quran is in your heart.\n\nMay Allah fill it with His light.`,
+  heart_caption: `🤍 <b>{surahs} of 114 surahs</b> are in your heart — {pct} of the Quran.\n\nMay Allah fill it with His light.`,
 
   // ── name & memorization review ────────────────────────────────
   name_confirm: `👤 Is this your name? Your teacher and friends will see it.`,
@@ -139,4 +139,6 @@ export default {
   mem_toast_removed: `{name} removed`,
   mem_nothing: `Those ayahs aren't marked as memorized.`,
   mem_removed: `🗑 Removed: {ar} — {name}, ayahs {from}–{to}`,
+  heart_label_surahs: `of 114 surahs are in my heart`,
+  heart_caption_pct: `🤍 <b>{pct}</b> of the Quran is in your heart.\n\nMay Allah fill it with His light.`,
 };

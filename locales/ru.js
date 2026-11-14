@@ -124,7 +124,7 @@ export default {
   heart_kicker: `Моё сердце`,
   heart_label: `Корана — в моём сердце`,
   heart_btn: `🤍 Моё сердце`,
-  heart_caption: `🤍 <b>{pct}</b> Корана — в вашем сердце.\n\nДа наполнит Аллах его Своим светом.`,
+  heart_caption: `🤍 В вашем сердце — <b>{surahs} из 114 сур</b>, {pct} Корана.\n\nДа наполнит Аллах его Своим светом.`,
 
   // ── name & memorization review ────────────────────────────────
   name_confirm: `👤 Это ваше имя? Его увидят ваш учитель и друзья.`,
@@ -139,4 +139,6 @@ export default {
   mem_toast_removed: `{name} — отметка снята`,
   mem_nothing: `Эти аяты не отмечены как выученные.`,
   mem_removed: `🗑 Убрано: {ar} — {name}, аяты {from}–{to}`,
+  heart_label_surahs: `из 114 сур — в моём сердце`,
+  heart_caption_pct: `🤍 <b>{pct}</b> Корана — в вашем сердце.\n\nДа наполнит Аллах его Своим светом.`,
 };
