@@ -1,0 +1,24 @@
+[Unit]
+Description=HifzBuddy Telegram bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hifzbuddy
+WorkingDirectory=/opt/hifzbuddy
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+RestartSec=5
+# Give the bot time to finish what it's doing on stop/restart
+TimeoutStopSec=15
+
+# Hardening: the bot may only write to its data folder
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/hifzbuddy
+
+[Install]
+WantedBy=multi-user.target

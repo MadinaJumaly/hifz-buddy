@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { Telegraf, session } from 'telegraf';
 
 import { userMiddleware } from './middleware/user.js';
-import { sessionStore } from './services/db.js';
+import db, { sessionStore } from './services/db.js';
 import { startReminderScheduler } from './services/reminders.js';
 import { mainMenu, matchMenuButton } from './utils/menu.js';
 import { t } from './utils/i18n.js';
@@ -143,12 +143,20 @@ const stopReminders = startReminderScheduler(bot.telegram);
 bot.launch(() => {
   console.log('Bot started');
   setCommands().catch((err) => console.error('setMyCommands failed:', err.message));
-}).catch((err) => console.error('Bot failed:', err.message));
+}).catch((err) => {
+  // Without this, the reminder timers would keep a bot that can't receive messages alive.
+  // Exiting lets the service manager (systemd) restart it.
+  console.error('Bot failed:', err.message);
+  stopReminders();
+  db.close();
+  process.exit(1);
+});
 
 // graceful stop
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.once(signal, () => {
     stopReminders();
     bot.stop(signal);
+    db.close();
   });
 }

@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily HifzBuddy database backup
+
+[Timer]
+# Every day at 03:30 server time; runs on next boot if the server was off
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

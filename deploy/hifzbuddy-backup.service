@@ -1,0 +1,13 @@
+[Unit]
+Description=HifzBuddy database backup
+
+[Service]
+Type=oneshot
+User=hifzbuddy
+WorkingDirectory=/opt/hifzbuddy
+ExecStart=/usr/bin/node scripts/backup.js
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/hifzbuddy
