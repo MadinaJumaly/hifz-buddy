@@ -61,6 +61,23 @@ CREATE TABLE IF NOT EXISTS friend_pairs (
 );
 
 -- ─────────────────────────────────────────
+-- pair_requests  (invite link opened → owner accepts or rejects)
+-- ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS pair_requests (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  requester_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  owner_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type         TEXT    NOT NULL CHECK (type IN ('teacher','friend')),
+  status       TEXT    NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','rejected')),
+  created_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+-- only one pending request per requester/owner/type
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pair_request_pending
+  ON pair_requests (requester_id, owner_id, type)
+  WHERE status = 'pending';
+
+-- ─────────────────────────────────────────
 -- memorized_ayahs
 -- ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS memorized_ayahs (

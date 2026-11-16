@@ -1,7 +1,8 @@
 import { Markup } from 'telegraf';
 import {
   getOrCreateSlug, resetSlug, getUserBySlug,
-  pairTeacher, pairFriend, getActiveTeacher, unpairTeacher,
+  pairTeacher, pairFriend, getActiveTeacher, getActiveFriends, unpairTeacher,
+  getUserById, createPairRequest, getPairRequest, setPairRequestStatus,
 } from '../services/db.js';
 import { t } from '../utils/i18n.js';
 
@@ -37,7 +38,8 @@ export async function handleResetLink(ctx) {
   await ctx.reply(t(lang, 'resetlink_done', { link }));
 }
 
-// Called from deep-link /start and after onboarding
+// Called from deep-link /start and after onboarding.
+// Opening a link only creates a request; the link owner must accept before anyone is paired.
 export async function applyInvite(ctx, type, slug) {
   const lang = ctx.user?.language || 'en';
 
@@ -46,28 +48,78 @@ export async function applyInvite(ctx, type, slug) {
   if (ownerUser.id === ctx.user.id) return ctx.reply(t(lang, 'pair_self'));
 
   if (type === 'teacher') {
-    const existing = getActiveTeacher(ctx.user.id);
-    if (existing) return ctx.reply(t(lang, 'pair_already_teacher'));
-    pairTeacher(ctx.user.id, ownerUser.id);
-    await ctx.reply(t(lang, 'pair_teacher_done', { name: ownerUser.display_name }));
+    if (getActiveTeacher(ctx.user.id)) return ctx.reply(t(lang, 'pair_already_teacher'));
+  } else if (getActiveFriends(ctx.user.id).some(f => f.id === ownerUser.id)) {
+    return ctx.reply(t(lang, 'pair_already_friends', { name: ownerUser.display_name }));
+  }
+
+  const requestId = createPairRequest(ctx.user.id, ownerUser.id, type);
+  if (!requestId) return ctx.reply(t(lang, 'pair_request_pending', { name: ownerUser.display_name }));
+
+  const ownerLang = ownerUser.language;
+  try {
+    await ctx.telegram.sendMessage(
+      ownerUser.telegram_id,
+      t(ownerLang, `pair_request_${type}`, { name: ctx.user.display_name }),
+      Markup.inlineKeyboard([
+        Markup.button.callback(t(ownerLang, 'pair_accept_btn'), `pair_ok_${requestId}`),
+        Markup.button.callback(t(ownerLang, 'pair_reject_btn'), `pair_no_${requestId}`),
+      ]),
+    );
+  } catch {
+    setPairRequestStatus(requestId, 'rejected');
+    return ctx.reply(t(lang, 'pair_owner_unreachable', { name: ownerUser.display_name }));
+  }
+
+  await ctx.reply(t(lang, 'pair_request_sent', { name: ownerUser.display_name }));
+}
+
+// Link owner taps ✅ Accept / ❌ Reject on a request
+export async function handlePairDecision(ctx) {
+  const [, decision, idText] = ctx.match;
+  const request = getPairRequest(Number(idText));
+  const owner = request && getUserById(request.owner_id);
+
+  // Only the link owner can answer, and only once
+  if (!request || !owner || owner.telegram_id !== ctx.from.id) return ctx.answerCbQuery();
+  const ownerLang = owner.language;
+  if (request.status !== 'pending') {
+    await ctx.answerCbQuery(t(ownerLang, 'pair_request_handled'));
+    return ctx.editMessageReplyMarkup(undefined).catch(() => {});
+  }
+
+  const requester = getUserById(request.requester_id);
+  if (!requester) return ctx.answerCbQuery();
+  const reqLang = requester.language;
+  await ctx.answerCbQuery();
+
+  if (decision === 'no') {
+    setPairRequestStatus(request.id, 'rejected');
+    await ctx.editMessageText(t(ownerLang, 'pair_rejected_owner', { name: requester.display_name }));
     try {
-      await ctx.telegram.sendMessage(
-        ownerUser.telegram_id,
-        t(ownerUser.language, 'pair_teacher_owner', { name: ctx.user.display_name }),
-      );
+      await ctx.telegram.sendMessage(requester.telegram_id, t(reqLang, 'pair_rejected_requester', { name: owner.display_name }));
     } catch {}
+    return;
+  }
+
+  if (request.type === 'teacher') {
+    // The student may have found another teacher while this request waited
+    if (getActiveTeacher(requester.id)) {
+      setPairRequestStatus(request.id, 'rejected');
+      return ctx.editMessageText(t(ownerLang, 'pair_student_has_teacher', { name: requester.display_name }));
+    }
+    pairTeacher(requester.id, owner.id);
   } else {
     // Friends see each other's progress, so pair both ways
-    pairFriend(ctx.user.id, ownerUser.id);
-    pairFriend(ownerUser.id, ctx.user.id);
-    await ctx.reply(t(lang, 'pair_friend_done', { name: ownerUser.display_name }));
-    try {
-      await ctx.telegram.sendMessage(
-        ownerUser.telegram_id,
-        t(ownerUser.language, 'pair_friend_owner', { name: ctx.user.display_name }),
-      );
-    } catch {}
+    pairFriend(requester.id, owner.id);
+    pairFriend(owner.id, requester.id);
   }
+  setPairRequestStatus(request.id, 'accepted');
+
+  await ctx.editMessageText(t(ownerLang, `pair_${request.type}_owner`, { name: requester.display_name }));
+  try {
+    await ctx.telegram.sendMessage(requester.telegram_id, t(reqLang, `pair_${request.type}_done`, { name: owner.display_name }));
+  } catch {}
 }
 
 export async function handleUnpair(ctx) {

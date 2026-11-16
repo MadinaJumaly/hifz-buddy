@@ -24,6 +24,18 @@ export default {
   pair_friend_done:
     `🤝 Вы и {name} теперь друзья. Каждый из вас будет видеть новое заучивание другого. БаракАллаху фикум!`,
   pair_already_teacher: `У вас уже есть активный учитель. Сначала используйте /unpair.`,
+  pair_request_teacher: `📖 {name} хочет подключиться к вам как ученик. Принять?`,
+  pair_request_friend: `🤝 {name} открыл(-а) вашу ссылку для друзей и хочет дружить. Принять?`,
+  pair_accept_btn: `✅ Принять`,
+  pair_reject_btn: `❌ Отклонить`,
+  pair_request_sent: `Запрос отправлен: {name}. Вы получите сообщение, когда он(а) ответит.`,
+  pair_request_pending: `Вы уже отправили запрос: {name}. Дождитесь ответа.`,
+  pair_request_handled: `На этот запрос уже ответили.`,
+  pair_rejected_owner: `❌ Вы отклонили запрос от {name}.`,
+  pair_rejected_requester: `{name} не принял(-а) ваш запрос.`,
+  pair_owner_unreachable: `Не удалось связаться с {name}. Попросите открыть бота и попробуйте снова.`,
+  pair_already_friends: `Вы и {name} уже друзья.`,
+  pair_student_has_teacher: `У {name} уже есть другой учитель, поэтому запрос отменён.`,
 
   generate_code_teacher:
     `Ваша ссылка для учеников — поделитесь ею со своими учениками:\n\n{link}\n\nСсылка бессрочная. Чтобы сбросить, используйте /resetlink teacher`,

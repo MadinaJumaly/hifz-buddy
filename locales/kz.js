@@ -24,6 +24,18 @@ export default {
   pair_friend_done:
     `🤝 Сіз және {name} енді доссыздар. Бір-біріңіздің жаңа жаттағандарыңызды көресіздер. БаракАллаһу фикум!`,
   pair_already_teacher: `Сізде белсенді ұстаз бар. Алдымен /unpair пайдаланыңыз.`,
+  pair_request_teacher: `📖 {name} сізге шәкірт ретінде қосылғысы келеді. Қабылдайсыз ба?`,
+  pair_request_friend: `🤝 {name} сіздің сілтемеңізді ашты және дос болғысы келеді. Қабылдайсыз ба?`,
+  pair_accept_btn: `✅ Қабылдау`,
+  pair_reject_btn: `❌ Қабылдамау`,
+  pair_request_sent: `Сұраныс жіберілді: {name}. Жауап бергенде хабарлама аласыз.`,
+  pair_request_pending: `Сіз сұраныс жібергенсіз: {name}. Жауабын күтіңіз.`,
+  pair_request_handled: `Бұл сұранысқа жауап берілген.`,
+  pair_rejected_owner: `❌ Сіз {name} сұранысын қабылдамадыңыз.`,
+  pair_rejected_requester: `{name} сұранысыңызды қабылдамады.`,
+  pair_owner_unreachable: `Хабарласу мүмкін болмады: {name}. Ботты ашып, қайта көріңіз деп сұраңыз.`,
+  pair_already_friends: `Сіз және {name} қазірдің өзінде доссыздар.`,
+  pair_student_has_teacher: `{name} басқа ұстазға қосылған, сондықтан сұраныс жойылды.`,
 
   generate_code_teacher:
     `Ұстаздық сілтемеңіз — оқушыларыңызбен бөлісіңіз:\n\n{link}\n\nСілтеме мерзімсіз. Жаңасын алу үшін /resetlink teacher пайдаланыңыз`,

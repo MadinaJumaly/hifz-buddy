@@ -24,6 +24,18 @@ export default {
   pair_friend_done:
     `🤝 You and {name} are now friends. You'll each see the other's new memorization. BarakAllahu feekum!`,
   pair_already_teacher: `You already have an active teacher. Use /unpair first.`,
+  pair_request_teacher: `📖 {name} wants to connect to you as a student. Do you accept?`,
+  pair_request_friend: `🤝 {name} opened your friend link and wants to be your friend. Do you accept?`,
+  pair_accept_btn: `✅ Accept`,
+  pair_reject_btn: `❌ Reject`,
+  pair_request_sent: `Request sent to {name}. You'll get a message when they answer.`,
+  pair_request_pending: `You already sent a request to {name}. Please wait for their answer.`,
+  pair_request_handled: `This request was already answered.`,
+  pair_rejected_owner: `❌ You rejected {name}'s request.`,
+  pair_rejected_requester: `{name} did not accept your request.`,
+  pair_owner_unreachable: `Could not reach {name}. Ask them to open the bot and try again.`,
+  pair_already_friends: `You and {name} are already friends.`,
+  pair_student_has_teacher: `{name} already has another teacher, so the request was cancelled.`,
 
   generate_code_teacher:
     `Your teacher link — share this with your students:\n\n{link}\n\nThis link never expires. Use /resetlink teacher to get a new one.`,

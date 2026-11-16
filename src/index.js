@@ -42,6 +42,7 @@ import {
   handleUnpair,
   handleUnpairConfirm,
   handleUnpairCancel,
+  handlePairDecision,
 } from './handlers/pairing.js';
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -85,6 +86,7 @@ bot.command('heart', handleHeart);
 bot.action(/^set_/, handleSettingsAction);
 bot.action('unpair_yes', handleUnpairConfirm);
 bot.action('unpair_no', handleUnpairCancel);
+bot.action(/^pair_(ok|no)_(\d+)$/, handlePairDecision);
 
 // plain text: typed answers, menu buttons, or a log like "2 255 257"
 bot.on('text', async (ctx) => {

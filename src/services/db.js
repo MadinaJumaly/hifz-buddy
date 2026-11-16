@@ -131,6 +131,29 @@ export function unpairTeacher(studentId) {
   `).run(studentId);
 }
 
+// ── pair requests ────────────────────────────────────────────
+
+export function getUserById(id) {
+  return db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+}
+
+// Returns the new request id, or null if one is already pending
+export function createPairRequest(requesterId, ownerId, type) {
+  const result = db.prepare(`
+    INSERT OR IGNORE INTO pair_requests (requester_id, owner_id, type)
+    VALUES (?, ?, ?)
+  `).run(requesterId, ownerId, type);
+  return result.changes ? Number(result.lastInsertRowid) : null;
+}
+
+export function getPairRequest(id) {
+  return db.prepare('SELECT * FROM pair_requests WHERE id = ?').get(id);
+}
+
+export function setPairRequestStatus(id, status) {
+  db.prepare('UPDATE pair_requests SET status = ? WHERE id = ?').run(status, id);
+}
+
 // ── memorized ayahs ──────────────────────────────────────────
 
 export function logAyahs({ studentId, surahNumber, ayahFrom, ayahTo, source = 'self_logged' }) {
