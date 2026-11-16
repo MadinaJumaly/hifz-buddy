@@ -10,9 +10,9 @@ import {
 
 // "My heart" card: a heart of 114 tiles, one per surah. A fully memorized surah's tile
 // is gold (with a soft nur glow); a partly memorized one fills with gold from the bottom.
-// Tiles were traced from a raster illustration into src/data/heart-tiles.json. Surahs are placed
-// to follow the barid.ia Quran-heart tracker (Al-Fatiha and Al-Baqarah at the top left, Juz Amma
-// down the right side and bottom). Each tile carries the surah's Arabic name.
+// Tiles were traced from a raster illustration into src/data/heart-tiles.json and follow the
+// safou_designer Quran-heart layout (Al-Fatiha in the left artery, Ya-Sin in the right one,
+// An-Nas at the bottom). Each tile carries the surah's Arabic name.
 
 const HEART = JSON.parse(readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '../data/heart-tiles.json'), 'utf8',
