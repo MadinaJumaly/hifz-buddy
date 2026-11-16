@@ -8,7 +8,7 @@ import { t } from '../utils/i18n.js';
 // Fonts are bundled in assets/fonts so the card looks the same on any server.
 
 const FONT_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../assets/fonts');
-export const FONT_FILES = ['Inter-Regular.ttf', 'Inter-Medium.ttf', 'PlayfairDisplay[wght].ttf']
+export const FONT_FILES = ['Inter-Regular.ttf', 'Inter-Medium.ttf', 'PlayfairDisplay[wght].ttf', 'Amiri-Regular-subset.ttf']
   .map(f => join(FONT_DIR, f));
 
 export const W = 1080;
