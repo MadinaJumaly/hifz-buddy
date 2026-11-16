@@ -16,7 +16,9 @@ Works on any Ubuntu 22.04 / 24.04 server. Below uses **Azure for Students**
    - **Virtual machine name:** `hifzbuddy`
    - **Region:** a European region, e.g. *Germany West Central* or *West Europe* (close to Telegram's servers)
    - **Image:** *Ubuntu Server 24.04 LTS – x64 Gen2*
-   - **Size:** *Standard_B1s* — pick the one marked **"Free services eligible"**
+   - **Size:** *Standard_B1s* — pick the one marked **"Free services eligible"**.
+     If it's unavailable, use *Standard_B2ats_v2* (also free for 12 months) or try another region
+     (Sweden Central, North Europe, Poland Central). Avoid ARM sizes (`…p…_v2`) with the x64 image.
    - **Authentication:** SSH public key, username `azureuser`, *Generate new key pair*
    - **Inbound ports:** SSH (22) only
    - Leave the rest as default → **Review + create** → **Download private key**
