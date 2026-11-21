@@ -152,5 +152,5 @@ export default {
   mem_nothing: `Бұл аяттар жатталған деп белгіленбеген.`,
   mem_removed: `🗑 Алынып тасталды: {ar} — {name}, {from}–{to} аяттар`,
   heart_label_surahs: `114 сүреден — жүрегімде`,
-  heart_caption_pct: `🤍 Құранның <b>{pct}</b> бөлігі жүрегіңізде.\n\nАллаһ оны Өз нұрымен толтырсын.`,
+  heart_caption_pct: `🤍 Құранның <b>{pct}</b> бөлігі жүрегіңізде.`,
 };

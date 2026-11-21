@@ -152,5 +152,5 @@ export default {
   mem_nothing: `Эти аяты не отмечены как выученные.`,
   mem_removed: `🗑 Убрано: {ar} — {name}, аяты {from}–{to}`,
   heart_label_surahs: `из 114 сур — в моём сердце`,
-  heart_caption_pct: `🤍 <b>{pct}</b> Корана — в вашем сердце.\n\nДа наполнит Аллах его Своим светом.`,
+  heart_caption_pct: `🤍 <b>{pct}</b> Корана — в вашем сердце.`,
 };

@@ -152,5 +152,5 @@ export default {
   mem_nothing: `Those ayahs aren't marked as memorized.`,
   mem_removed: `🗑 Removed: {ar} — {name}, ayahs {from}–{to}`,
   heart_label_surahs: `of 114 surahs are in my heart`,
-  heart_caption_pct: `🤍 <b>{pct}</b> of the Quran is in your heart.\n\nMay Allah fill it with His light.`,
+  heart_caption_pct: `🤍 <b>{pct}</b> of the Quran is in your heart.`,
 };
