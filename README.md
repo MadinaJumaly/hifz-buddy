@@ -111,8 +111,11 @@ bash /opt/hifzbuddy/deploy/update.sh
 ## Credits
 
 - Fonts: Inter, Playfair Display and Amiri, all under the SIL Open Font License (see `assets/fonts`).
-- The heart illustration is used under license and is not covered by this repository's license.
+- The heart illustration is original artwork by Madina Jumaly.
 
 ## License
 
-ISC
+The code is licensed under [ISC](LICENSE).
+
+The heart artwork (`src/data/heart-tiles.json`) is **not** covered by that license. It is
+all rights reserved; see [src/data/ARTWORK-LICENSE.md](src/data/ARTWORK-LICENSE.md).
